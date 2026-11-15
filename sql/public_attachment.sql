@@ -1,0 +1,3 @@
+-- 原教学单表脚本已停用，避免误删小组数据或导入个人作业记录。
+-- 新建空库请执行01_greenhouse_framework.sql。
+-- 已有框架数据库如需补菜单，请执行02_existing_database_menu.sql。

@@ -1,0 +1,97 @@
+package user.filter;
+
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+import java.io.IOException;
+
+public class LoginFilter implements Filter {
+
+    @Override
+    public void doFilter(
+            ServletRequest servletRequest,
+            ServletResponse servletResponse,
+            FilterChain chain)
+            throws IOException, ServletException {
+
+        HttpServletRequest request =
+                (HttpServletRequest) servletRequest;
+
+        HttpServletResponse response =
+                (HttpServletResponse) servletResponse;
+
+        // 小程序接口交由MiniTodoServlet校验访问码
+        String w08Path = request.getRequestURI()
+                .substring(request.getContextPath().length());
+
+        if ("/api/week08/todo".equals(w08Path)
+                || "/api/week08/location".equals(w08Path)
+                || "/api/week08/bind".equals(w08Path)
+                || "/api/week08/auth".equals(w08Path)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String path = request.getServletPath();
+
+        // 登录页面、登录接口和静态资源直接放行
+        boolean publicResource =
+                "/home/main/login.jsp".equals(path)
+                        || "/user_center_servlet_action".equals(path)
+                        || path.startsWith("/assets/")
+                        || "/favicon.ico".equals(path);
+
+        if (publicResource) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        // 受保护的内容不使用浏览器缓存
+        response.setHeader("Cache-Control", "no-store");
+
+        // false 表示没有 Session 时不新建
+        HttpSession session = request.getSession(false);
+
+        if (session != null
+                && session.getAttribute("loginUser") != null) {
+
+            // 已登录，继续访问
+            chain.doFilter(request, response);
+            return;
+        }
+
+        // 接口请求返回 JSON，避免前端把登录页当成 JSON
+        boolean apiRequest =
+                "/device_file_servlet_action".equals(path)
+                        || "/device_data_servlet_action".equals(path)
+                        || path.startsWith("/api/")
+                        || ("/todo_report_servlet_action".equals(path)
+                        && !"export".equals(
+                        request.getParameter("action")))
+                        || "XMLHttpRequest".equalsIgnoreCase(
+                        request.getHeader("X-Requested-With"));
+
+        if (apiRequest) {
+            response.setStatus(401);
+            response.setContentType(
+                    "application/json;charset=UTF-8");
+
+            response.getWriter().write(
+                    "{\"result_code\":401,"
+                            + "\"result_msg\":\"请先登录\"}");
+            return;
+        }
+
+        // 普通页面请求：未登录就返回登录页
+        response.sendRedirect(
+                request.getContextPath()
+                        + "/home/main/login.jsp"
+        );
+    }
+}

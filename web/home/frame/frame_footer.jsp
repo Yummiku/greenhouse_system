@@ -1,0 +1,11 @@
+<%@ page pageEncoding="UTF-8" %>
+
+<div class="page-footer">
+    <div class="page-footer-inner">
+        XM06 · 农业大棚系统 · 2026
+    </div>
+
+    <div class="scroll-to-top">
+        <i class="icon-arrow-up"></i>
+    </div>
+</div>

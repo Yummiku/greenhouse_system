@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
+  <display-name>greenhouse_system</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.htm</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>default.html</welcome-file>
+    <welcome-file>default.htm</welcome-file>
+    <welcome-file>default.jsp</welcome-file>
+  </welcome-file-list>
+	<!-- ================  device begin =================           -->
+	<servlet>
+		<servlet-name>device_file_servlet_action</servlet-name>
+		<servlet-class>device.file.ServletAction</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>device_file_servlet_action</servlet-name>
+		<url-pattern>/device_file_servlet_action</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>device_data_servlet_action</servlet-name>
+		<servlet-class>device.file.ServletAction</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>device_data_servlet_action</servlet-name>
+		<url-pattern>/device_data_servlet_action</url-pattern>
+	</servlet-mapping>
+		<!-- ================  device end =================           -->
+	<servlet>
+		<servlet-name>user_center_servlet_action</servlet-name>
+		<servlet-class>user.center.ServletAction</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>user_center_servlet_action</servlet-name>
+		<url-pattern>/user_center_servlet_action</url-pattern>
+	</servlet-mapping>
+
+  
+    <!-- 第6、7、8题：待办事项统计、导出、打印报表 -->
+	<servlet>
+		<servlet-name>todo_report_servlet_action</servlet-name>
+		<servlet-class>device.report.TodoReportServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>todo_report_servlet_action</servlet-name>
+		<url-pattern>/todo_report_servlet_action</url-pattern>
+	</servlet-mapping>
+
+	<!-- 第十一题：统一登录拦截 -->
+	<filter>
+		<filter-name>LoginFilter</filter-name>
+		<filter-class>user.filter.LoginFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>LoginFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>week08_mini_todo</servlet-name>
+		<servlet-class>week08.todo.MiniTodoServlet</servlet-class>
+		<multipart-config>
+			<max-file-size>5242880</max-file-size>
+			<max-request-size>6291456</max-request-size>
+			<file-size-threshold>0</file-size-threshold>
+		</multipart-config>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>week08_mini_todo</servlet-name>
+		<url-pattern>/api/week08/todo</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>week08_location</servlet-name>
+		<servlet-class>week08.location.LocationServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>week08_location</servlet-name>
+		<url-pattern>/api/week08/location</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>week08BindServlet</servlet-name>
+		<servlet-class>week08.bind.BindServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>week08BindServlet</servlet-name>
+		<url-pattern>/api/week08/bind</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>week08AuthServlet</servlet-name>
+		<servlet-class>week08.bind.AuthServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>week08AuthServlet</servlet-name>
+		<url-pattern>/api/week08/auth</url-pattern>
+	</servlet-mapping>
+
+	<!-- PC业务接口操作权限 -->
+	<filter>
+		<filter-name>BusinessPermissionFilter</filter-name>
+		<filter-class>
+			user.filter.BusinessPermissionFilter
+		</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>BusinessPermissionFilter</filter-name>
+		<url-pattern>/device_file_servlet_action</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>BusinessPermissionFilter</filter-name>
+		<url-pattern>/device_data_servlet_action</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>EnvironmentServlet</servlet-name>
+		<servlet-class>
+			greenhouse.environment.EnvironmentServlet
+		</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>EnvironmentServlet</servlet-name>
+		<url-pattern>/api/environment</url-pattern>
+	</servlet-mapping>
+</web-app>

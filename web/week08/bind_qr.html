@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>平台用户身份二维码</title>
+  <style>
+    body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f5f6f8;color:#222;margin:0;padding:30px}
+    main{max-width:720px;margin:auto;padding:28px;background:white;border-radius:12px}
+    h1{font-size:25px}input,button{font:inherit;padding:10px;margin:5px 0}input{width:100px}
+    button{background:#ff981e;border:0;border-radius:5px;cursor:pointer;padding:11px 18px}
+    #status{white-space:pre-wrap;line-height:1.6}#qr{display:block;width:360px;max-width:100%;height:auto}
+    #text{overflow-wrap:anywhere;background:#f5f6f8;padding:12px;user-select:all}
+    .hint{color:#666;font-size:14px;line-height:1.7}
+  </style>
+</head>
+<body><main>
+  <h1>平台用户身份二维码</h1>
+  <p class="hint">先在同一个浏览器登录农业大棚系统的管理员账号。二维码有效期为10分钟。</p>
+  <label>平台用户 id：<input id="uid" placeholder="用户编号" inputmode="numeric"></label>
+  <button id="generate">生成身份二维码</button>
+  <p id="status" role="status">请填写需要绑定的平台用户编号，然后生成二维码。</p>
+  <section id="result" hidden>
+    <img id="qr" alt="平台用户身份二维码">
+    <p>二维码原始内容：</p><p id="text"></p>
+    <p class="hint">此图用于之后的小程序扫码绑定。现在生成二维码还不会产生 OpenID 绑定记录。</p>
+  </section>
+</main>
+<script>
+  const endpoint = new URL('../api/week08/bind', location.href).href;
+  const statusBox = document.getElementById('status');
+  const resultBox = document.getElementById('result');
+  document.getElementById('generate').onclick = async function () {
+    this.disabled = true; resultBox.hidden = true; statusBox.textContent = '正在生成……';
+    try {
+      const body = new URLSearchParams({action:'create_ticket',user_id:document.getElementById('uid').value.trim()});
+      const response = await fetch(endpoint, {
+        method:'POST', credentials:'same-origin',
+        headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','X-Requested-With':'XMLHttpRequest'},
+        body:body.toString()
+      });
+      const type = response.headers.get('content-type') || '';
+      if (!type.includes('application/json')) throw new Error('返回了网页，请先登录并核对LoginFilter放行配置');
+      const data = await response.json();
+      if (!response.ok || data.result_code !== 0) throw new Error(data.result_msg || '生成失败');
+      const user = data.user;
+      statusBox.textContent = `用户：${user.display_name}\n平台用户id：${user.user_id}\n账号：${user.username}\n绑定码有效期：${data.valid_minutes}分钟（从生成时起）`;
+      document.getElementById('text').textContent = data.bind_text;
+      const qr = document.getElementById('qr');
+      qr.onerror = () => { statusBox.textContent += '\n二维码图片加载失败，请重新登录或生成。'; };
+      qr.src = endpoint + '?action=qr&text=' + encodeURIComponent(data.bind_text);
+      resultBox.hidden = false;
+    } catch (e) { statusBox.textContent = e.message; }
+    finally { this.disabled = false; }
+  };
+</script></body></html>

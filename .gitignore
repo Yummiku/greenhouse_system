@@ -1,0 +1,14 @@
+# 本机配置、运行历史和生成物
+**/greenhouse.local.properties
+.idea/workspace.xml
+.idea/shelf/
+out/
+web/WEB-INF/classes/
+*.log
+
+# 本机环境、上传文件与其他生成物
+.env
+.env.*
+!.env.example
+*.class
+/uploads/

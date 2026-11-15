@@ -1,0 +1,16 @@
+-- 仅用于已有13张框架表的greenhouse_system数据库；新库只执行01脚本。
+-- 保留已有账号和业务记录，不删除、不清空、不修改原有菜单。
+SET NAMES utf8mb4;
+USE greenhouse_system;
+ALTER TABLE todo_login_user MODIFY role_id INT NOT NULL COMMENT '1系统管理员，2普通管理员，3普通用户';
+INSERT INTO menu_tree (item_id,parent_id,module_id,item_name,item_url) VALUES
+(100,0,'todo','工作管理',''),
+(101,100,'todo','待办事项','/maintain/todo/todo_crud.jsp'),
+(102,100,'todo','数据看板','/maintain/todo/todo_dashboard.jsp'),
+(200,0,'greenhouse','农业管理',''),
+(201,200,'greenhouse','环境监测','/maintain/environment/environment.jsp')
+ON DUPLICATE KEY UPDATE item_id=VALUES(item_id);
+INSERT IGNORE INTO menu_view(role_id,item_id) VALUES
+(1,100),(1,101),(1,102),(1,200),(1,201),
+(2,100),(2,101),(2,102),(2,200),(2,201),
+(3,100),(3,101),(3,102),(3,200),(3,201);
