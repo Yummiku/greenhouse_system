@@ -133,4 +133,13 @@
 		<servlet-name>EnvironmentServlet</servlet-name>
 		<url-pattern>/api/environment</url-pattern>
 	</servlet-mapping>
+    <servlet>
+        <servlet-name>ThresholdRuleServlet</servlet-name>
+        <servlet-class>greenhouse.threshold.ThresholdRuleServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ThresholdRuleServlet</servlet-name>
+        <url-pattern>/api/threshold</url-pattern>
+    </servlet-mapping>
+
 </web-app>
