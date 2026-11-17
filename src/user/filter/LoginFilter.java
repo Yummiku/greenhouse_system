@@ -10,8 +10,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Map;
+import user.dao.UserDao;
 
 public class LoginFilter implements Filter {
+    protected UserDao userDao(){return new UserDao();}
 
     @Override
     public void doFilter(
@@ -32,7 +36,8 @@ public class LoginFilter implements Filter {
 
         if ("/api/week08/todo".equals(w08Path)
                 || "/api/week08/location".equals(w08Path)
-                || "/api/week08/bind".equals(w08Path)
+                || ("/api/week08/bind".equals(w08Path)
+                && "ping".equals(request.getParameter("action")))
                 || "/api/week08/auth".equals(w08Path)) {
             chain.doFilter(request, response);
             return;
@@ -58,12 +63,23 @@ public class LoginFilter implements Filter {
         // false 表示没有 Session 时不新建
         HttpSession session = request.getSession(false);
 
-        if (session != null
-                && session.getAttribute("loginUser") != null) {
-
-            // 已登录，继续访问
-            chain.doFilter(request, response);
-            return;
+        if (session != null && session.getAttribute("loginUser") instanceof Map) {
+            Map<?,?> old=(Map<?,?>)session.getAttribute("loginUser");
+            try {
+                Map<String,String> fresh=userDao().findActiveById(String.valueOf(old.get("id")));
+                if(fresh!=null && fresh.get("authVersion").equals(old.get("authVersion"))) {
+                    session.setAttribute("loginUser",fresh);
+                    chain.doFilter(request,response);
+                    return;
+                }
+                session.invalidate();
+            } catch(SQLException e) {
+                request.getServletContext().log("账号有效性校验失败",e);
+                response.setStatus(503);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"result_code\":503,\"result_msg\":\"账号服务暂不可用，请检查数据库连接及09升级脚本\"}");
+                return;
+            }
         }
 
         // 接口请求返回 JSON，避免前端把登录页当成 JSON

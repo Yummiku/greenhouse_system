@@ -133,4 +133,12 @@
 		<servlet-name>EnvironmentServlet</servlet-name>
 		<url-pattern>/api/environment</url-pattern>
 	</servlet-mapping>
+  <servlet>
+    <servlet-name>UserServlet</servlet-name>
+    <servlet-class>greenhouse.identity.UserServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>UserServlet</servlet-name>
+    <url-pattern>/api/users</url-pattern>
+  </servlet-mapping>
 </web-app>
