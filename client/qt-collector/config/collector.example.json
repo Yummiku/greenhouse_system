@@ -1,0 +1,21 @@
+{
+  "base_url": "http://127.0.0.1:8080",
+  "collector_key": "REPLACE_WITH_REAL_COLLECTOR_KEY",
+  "greenhouse_id": 3,
+  "greenhouse_code": "GH-A-001",
+  "device_pk": 12,
+  "metrics": [
+    "air_temperature",
+    "air_humidity",
+    "soil_temperature",
+    "soil_moisture",
+    "illuminance"
+  ],
+  "upload_interval_ms": 2000,
+  "retry": {
+    "max_retries": 3,
+    "initial_delay_ms": 1000,
+    "backoff_multiplier": 2,
+    "request_timeout_ms": 10000
+  }
+}
