@@ -133,4 +133,17 @@
 		<servlet-name>EnvironmentServlet</servlet-name>
 		<url-pattern>/api/environment</url-pattern>
 	</servlet-mapping>
+
+	<!-- 个人消息管理：肖泽亮 -->
+	<servlet>
+		<servlet-name>MessageServlet</servlet-name>
+		<servlet-class>
+			greenhouse.message.servlet.MessageServlet
+		</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>MessageServlet</servlet-name>
+		<url-pattern>/api/messages</url-pattern>
+	</servlet-mapping>
 </web-app>
