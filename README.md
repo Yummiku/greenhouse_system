@@ -15,7 +15,7 @@
 
 完整操作步骤请阅读 [readme.txt](readme.txt)，包括建库、数据库连接、IDEA / Tomcat 配置、创建账号和启动检查。
 
-1. 新成员在自己的 MySQL 中创建空库 `greenhouse_system`，执行 [初始化 SQL](sql/01_greenhouse_framework.sql)。
+1. 新成员在自己的 MySQL 中创建空库 `greenhouse_system`，依次执行 [基础初始化](sql/01_greenhouse_framework.sql) 和 [用户管理升级](sql/09_user_management.sql)。
 2. 将 `web/WEB-INF/greenhouse.example.properties` 复制为同目录的 `greenhouse.local.properties`，填写自己的连接配置。
 3. 配置 JDK 17 和 Tomcat 10.1；IDEA 路径变量 `TOMCAT_HOME` 指向自己的 Tomcat 安装目录。
 4. 重新构建项目，运行 `user.tools.AddUserDemo`，按提示设置本机三类账号的密码。
@@ -43,3 +43,10 @@ Java 编译、Tomcat 启动和业务验收需在各成员的开发环境执行�
 - 本机配置、数据库密码、微信密钥、IDEA 运行历史和编译输出不提交到仓库。
 - `.gitignore` 不会过滤手动制作的压缩包；手工分享前同样排除私有配置。
 - `week08` 包和 `/api/week08/*` 路由为原小程序兼容代码，后续统一时需同步修改客户端。
+
+## 第十二周：用户管理
+
+新增用户信息入口、系统管理员账号维护、有效负责人列表及PC旧会话失效检查。
+已有库先备份并执行 `sql/09_user_management.sql`，再部署代码并重新登录；不要重新执行01脚本。
+账号状态为 `active / disabled / deleted`，有效负责人接口为 `/api/users?action=options`。
+详细更新与验收步骤见 `readme.txt` 第八部分。隔离集成检查见 `tests/UserModuleCheck.java`。

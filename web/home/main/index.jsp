@@ -65,6 +65,12 @@
                         </div>
 
                         <div class="portlet-body">
+                            <a class="btn default" href="<%= request.getContextPath() %>/maintain/user/index.jsp">用户信息</a>
+                            <a class="btn green"
+                               href="<%= request.getContextPath() %>/maintain/greenhouse/index.jsp">
+                                <i class="icon-home"></i>
+                                大棚档案
+                            </a>
                             <a class="btn blue"
                                href="<%= request.getContextPath() %>/maintain/todo/todo_crud.jsp">
                                 <i class="icon-list"></i>
@@ -105,8 +111,13 @@
                                     <td>待接入</td>
                                 </tr>
                                 <tr>
-                                    <td>大棚与设备</td>
-                                    <td>大棚档案、设备归属及运行状态</td>
+                                    <td>大棚档案</td>
+                                    <td>大棚资料维护、查询、统计与输出</td>
+                                    <td><a href="<%= request.getContextPath() %>/maintain/greenhouse/index.jsp">进入模块</a></td>
+                                </tr>
+                                <tr>
+                                    <td>设备管理</td>
+                                    <td>设备档案、归属及运行状态</td>
                                     <td>待接入</td>
                                 </tr>
                                 <tr>
