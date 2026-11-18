@@ -1,5 +1,18 @@
--- 51_personal_message.sql 肖泽亮 个人消息模块
--- 可重复执行：表已存在时不会删除，测试数据也不会重复插入。
+-- ============================================================
+-- 51_personal_message.sql  个人消息管理模块（肖泽亮）
+-- 仅建表 + 索引，不含任何演示数据；演示数据见 53_personal_message_demo.sql
+-- 可重复执行：表已存在时不会删除、不会改动现有数据
+--
+-- 执行顺序（在目标库上依次执行）：
+--   09_user_management.sql        -> 提供 todo_login_user（含 status 字段）
+--   51_personal_message.sql       -> 本脚本，建 personal_message 表
+--   52_personal_message_menu.sql  -> 菜单入口（增量补充个人消息菜单）
+--   53_personal_message_demo.sql  -> 可选演示数据（按用户名解析账号，找不到就跳过）
+--
+-- 注意：脚本开头 USE 的库名与团队其他模块脚本保持一致；
+--       若在验收库执行，请先确认目标库（如 greenhouse_system_test）再运行。
+-- ============================================================
+SET NAMES utf8mb4;
 USE greenhouse_system;
 
 CREATE TABLE IF NOT EXISTS personal_message (
@@ -21,11 +34,7 @@ CREATE TABLE IF NOT EXISTS personal_message (
                                   INDEX idx_status(send_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='个人消息表';
 
--- 测试数据：sender_id=1是admin，recipient_id=3是worker
-INSERT INTO personal_message(title, content, message_type, sender_id, recipient_id, send_status)
-SELECT '测试草稿1', '这是admin写给worker的草稿', 'system', 1, 3, 'draft'
-WHERE NOT EXISTS (SELECT 1 FROM personal_message WHERE title = '测试草稿1');
-
-INSERT INTO personal_message(title, content, message_type, sender_id, recipient_id, send_status, sent_at)
-SELECT '测试已发消息', 'admin发送给worker正式消息', 'notice', 1, 3, 'sent', NOW()
-WHERE NOT EXISTS (SELECT 1 FROM personal_message WHERE title = '测试已发消息');
+-- 建表结果核对
+SELECT COUNT(*) AS personal_message_table_count
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'personal_message';

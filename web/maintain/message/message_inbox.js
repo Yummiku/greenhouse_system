@@ -363,7 +363,38 @@
                 .replace(/"/g, "&quot;");
     }
 
-    function printList() {
+    async function printList() {
+        // 打印必须覆盖全部筛选结果，而不是当前页；先向后端取报表数据，取不到就不打印。
+        var params = filters();
+        if (printButton) printButton.disabled = true;
+        statusText.textContent = "正在准备打印数据……";
+        var reportRows;
+        var reportTotal;
+        try {
+            if (!window.GHApi) {
+                throw new Error("公共请求工具未加载，请检查脚本引用顺序");
+            }
+            var result = await window.GHApi.get("/api/messages", {
+                action: "reportInbox",
+                keyword: params.keyword,
+                messageType: params.messageType,
+                readState: params.readState,
+                startDate: params.startDate,
+                endDate: params.endDate,
+                sortBy: sortSelect.value,
+                sortDir: dirSelect.value
+            });
+            var data = result.data || {};
+            reportRows = data.list || [];
+            reportTotal = Number(data.total == null ? reportRows.length : data.total);
+        } catch (error) {
+            statusText.textContent = "打印数据获取失败：" + error.message;
+            if (printButton) printButton.disabled = false;
+            return;
+        }
+        if (printButton) printButton.disabled = false;
+        statusText.textContent = "打印数据共 " + reportTotal + " 条。";
+
         var now = new Date();
         var pad = function (value) {
             return value < 10 ? "0" + value : String(value);
@@ -371,7 +402,7 @@
         var timeText = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate())
                 + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
 
-        var rows = lastRows.map(function (message) {
+        var rows = reportRows.map(function (message) {
             return "<tr>"
                     + "<td>" + escapeHtml(message.id) + "</td>"
                     + "<td>" + escapeHtml(message.title) + "</td>"
@@ -395,10 +426,12 @@
                 + "<h2>农业大棚系统 - 我的收件箱</h2>"
                 + "<div class=\"meta\">筛选条件：" + escapeHtml(filterSummary()) + "</div>"
                 + "<div class=\"meta\">打印时间：" + escapeHtml(timeText)
-                + "　当前条件共 " + lastTotal + " 条，本页 " + lastRows.length + " 条</div>"
+                + "　实际条数：" + reportTotal + " 条（全部筛选结果，非当前页）</div>"
                 + "<table><thead><tr>"
                 + "<th>编号</th><th>标题</th><th>类型</th><th>发送人ID</th><th>发送时间</th><th>状态</th>"
-                + "</tr></thead><tbody>" + rows + "</tbody></table>"
+                + "</tr></thead><tbody>"
+                + (rows === "" ? "<tr><td colspan=\"6\">当前条件下没有消息</td></tr>" : rows)
+                + "</tbody></table>"
                 + "</body></html>";
 
         var printWindow = window.open("", "_blank", "width=980,height=720");

@@ -21,8 +21,9 @@ import java.sql.SQLException;
  *
  * <p>参数说明：</p>
  * <ul>
- *   <li>senderId：发送人id，可省略，默认 1（系统管理员），必须是不为空的合法账号</li>
- *   <li>recipientId：接收人id，必填，必须是 todo_login_user 中存在的账号</li>
+ *   <li>senderId：发送人id，可省略；省略时取库中第一个状态为 active 的系统管理员账号，
+ *       不写死固定编号，发送人必须是有效账号</li>
+ *   <li>recipientId：接收人id，必填，必须是 todo_login_user 中存在且状态为 active 的账号</li>
  *   <li>title：消息标题，必填，最长 200 字</li>
  *   <li>content：消息正文，可为空，最长 5000 字</li>
  *   <li>messageType：消息类型，建议使用 TYPE_NOTICE / TYPE_TASK / TYPE_SYSTEM，
@@ -35,9 +36,6 @@ public final class MessageNotifier {
     public static final String TYPE_TASK = "task";
     public static final String TYPE_SYSTEM = "system";
 
-    /** 未指定发送人时使用的系统账号。 */
-    public static final int DEFAULT_SENDER_ID = 1;
-
     private static final int TITLE_MAX = 200;
     private static final int CONTENT_MAX = 5000;
     private static final int TYPE_MAX = 50;
@@ -48,20 +46,26 @@ public final class MessageNotifier {
     }
 
     /**
-     * 以系统管理员身份发送一条消息。
+     * 以默认系统发送账号发送一条消息。
+     * 默认发送人不写死编号，而是取当前库中第一个状态为 active 的系统管理员账号；
+     * 找不到时抛 IllegalStateException，调用方需显式指定发送人。
      *
      * @return 新消息主键
      */
     public static long notify(int recipientId, String title, String content, String messageType)
             throws SQLException {
-        return notify(DEFAULT_SENDER_ID, recipientId, title, content, messageType);
+        Integer systemSender = MESSAGE_DAO.findSystemSenderId();
+        if (systemSender == null) {
+            throw new IllegalStateException("未找到状态为active的系统管理员账号，无法确定默认发送人");
+        }
+        return notify(systemSender.intValue(), recipientId, title, content, messageType);
     }
 
     /**
-     * 指定发送人发送一条消息。
+     * 指定发送人发送一条消息，发送人与接收人都必须是状态为 active 的有效账号。
      *
      * @return 新消息主键
-     * @throws IllegalArgumentException 参数不合法（接收人不存在、标题为空、长度超限）
+     * @throws IllegalArgumentException 参数不合法（账号不存在/已停用、标题为空、长度超限）
      * @throws SQLException 数据库写入失败
      */
     public static long notify(int senderId, int recipientId, String title,
@@ -74,11 +78,14 @@ public final class MessageNotifier {
         if (recipientId <= 0) {
             throw new IllegalArgumentException("接收人id必须为正整数");
         }
-        if (!MESSAGE_DAO.userExists(recipientId)) {
-            throw new IllegalArgumentException("接收人不存在：" + recipientId);
+        if (!MESSAGE_DAO.activeUserExists(recipientId)) {
+            throw new IllegalArgumentException("接收人不存在或已停用：" + recipientId);
         }
-        if (!MESSAGE_DAO.userExists(senderId)) {
-            throw new IllegalArgumentException("发送人不存在：" + senderId);
+        if (!MESSAGE_DAO.activeUserExists(senderId)) {
+            throw new IllegalArgumentException("发送人不存在或已停用：" + senderId);
+        }
+        if (recipientId == senderId) {
+            throw new IllegalArgumentException("不能给自己发送消息");
         }
 
         String safeTitle = title == null ? "" : title.trim();
