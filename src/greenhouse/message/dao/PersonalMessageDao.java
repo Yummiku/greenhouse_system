@@ -351,7 +351,17 @@ public class PersonalMessageDao {
     }
 
     /** 接收人必须是存在的有效账号。 */
-    public boolean userExists(int userId) throws SQLException {        String sql = "SELECT 1 FROM todo_login_user WHERE id = ? AND role_id IN (1, 2, 3)";
+    public boolean userExists(int userId) throws SQLException {
+        return activeUserExists(userId);
+    }
+
+    /**
+     * 有效账号：存在、角色合法、且状态为 active。
+     * 停用（disabled）与已删除（deleted）账号一律视为不可用，收发校验统一走这里。
+     */
+    public boolean activeUserExists(int userId) throws SQLException {
+        String sql = "SELECT 1 FROM todo_login_user "
+                + "WHERE id = ? AND role_id IN (1, 2, 3) AND status = 'active'";
 
         Db db = new Db(DB_NAME);
         try {
@@ -360,6 +370,46 @@ public class PersonalMessageDao {
                 statement.setInt(1, userId);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     return resultSet.next();
+                }
+            }
+        } finally {
+            db.close();
+        }
+    }
+
+    /**
+     * 按用户名查有效账号 id，供演示数据与系统发送人解析使用，避免写死账号编号。
+     * 找不到返回 null。
+     */
+    public Integer findActiveUserIdByUsername(String username) throws SQLException {
+        String sql = "SELECT id FROM todo_login_user "
+                + "WHERE username = ? AND role_id IN (1, 2, 3) AND status = 'active' LIMIT 1";
+
+        Db db = new Db(DB_NAME);
+        try {
+            Connection connection = db.getConnection();
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, username);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    return resultSet.next() ? Integer.valueOf(resultSet.getInt("id")) : null;
+                }
+            }
+        } finally {
+            db.close();
+        }
+    }
+
+    /** 取第一个有效的系统管理员账号作为默认发送人，找不到返回 null。 */
+    public Integer findSystemSenderId() throws SQLException {
+        String sql = "SELECT id FROM todo_login_user "
+                + "WHERE role_id = 1 AND status = 'active' ORDER BY id LIMIT 1";
+
+        Db db = new Db(DB_NAME);
+        try {
+            Connection connection = db.getConnection();
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    return resultSet.next() ? Integer.valueOf(resultSet.getInt("id")) : null;
                 }
             }
         } finally {

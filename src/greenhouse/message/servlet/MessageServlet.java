@@ -96,6 +96,14 @@ public class MessageServlet extends HttpServlet {
                 exportCsv(request, response, userId, roleId, false);
                 return;
             }
+            if ("reportInbox".equals(action)) {
+                report(request, response, userId, roleId, true);
+                return;
+            }
+            if ("reportOutbox".equals(action)) {
+                report(request, response, userId, roleId, false);
+                return;
+            }
             reject(response, 400, "未实现的业务操作");
         } catch (SQLException e) {
             reject(response, 500, "消息查询失败，请检查数据库配置");
@@ -321,9 +329,26 @@ public class MessageServlet extends HttpServlet {
 
     // ==================== POST 写入 ====================
 
+    /**
+     * 发送人（当前登录账号）本身也必须是有效账号。
+     * 登录后被停用/删除的账号不能继续发消息，返回 403。
+     */
+    private boolean requireActiveSender(HttpServletResponse response, int senderId)
+            throws IOException, SQLException {
+
+        if (!messageDao.activeUserExists(senderId)) {
+            reject(response, 403, "您没有权限发送消息，账号不存在或已停用");
+            return false;
+        }
+        return true;
+    }
+
     private void createDraft(HttpServletRequest request, HttpServletResponse response,
                              int senderId) throws IOException, SQLException, JSONException {
 
+        if (!requireActiveSender(response, senderId)) {
+            return;
+        }
         String title = trimmed(request.getParameter("title"));
         String messageType = trimmed(request.getParameter("messageType"));
         String content = request.getParameter("content") == null
@@ -354,8 +379,8 @@ public class MessageServlet extends HttpServlet {
             reject(response, 400, "接收人无效");
             return;
         }
-        if (!messageDao.userExists(recipientId)) {
-            reject(response, 400, "接收人账号不存在");
+        if (!messageDao.activeUserExists(recipientId)) {
+            reject(response, 400, "接收人账号不存在或已停用");
             return;
         }
         if (recipientId == senderId) {
@@ -375,6 +400,9 @@ public class MessageServlet extends HttpServlet {
     private void updateDraft(HttpServletRequest request, HttpServletResponse response,
                              int userId) throws IOException, SQLException, JSONException {
 
+        if (!requireActiveSender(response, userId)) {
+            return;
+        }
         long id = parsePositiveLong(request.getParameter("id"));
         if (id <= 0) {
             reject(response, 400, "消息编号无效");
@@ -411,8 +439,8 @@ public class MessageServlet extends HttpServlet {
             reject(response, 400, "接收人无效");
             return;
         }
-        if (!messageDao.userExists(recipientId)) {
-            reject(response, 400, "接收人账号不存在");
+        if (!messageDao.activeUserExists(recipientId)) {
+            reject(response, 400, "接收人账号不存在或已停用");
             return;
         }
         if (recipientId == userId) {
@@ -446,6 +474,9 @@ public class MessageServlet extends HttpServlet {
                            int userId, String roleId)
             throws IOException, SQLException, JSONException {
 
+        if (!requireActiveSender(response, userId)) {
+            return;
+        }
         long id = parsePositiveLong(request.getParameter("id"));
         if (id <= 0) {
             reject(response, 400, "消息编号无效");
@@ -464,6 +495,12 @@ public class MessageServlet extends HttpServlet {
         if (!STATUS_DRAFT.equals(message.getSendStatus())
                 || message.getWithdrawnAt() != null) {
             reject(response, 409, "该消息不是草稿，不能发送");
+            return;
+        }
+        // 发送时重新校验接收人：保存草稿后接收人可能已被停用或删除。
+        if (message.getRecipientId() == null
+                || !messageDao.activeUserExists(message.getRecipientId())) {
+            reject(response, 409, "接收人账号不存在或已停用，无法发送");
             return;
         }
 
@@ -652,26 +689,7 @@ public class MessageServlet extends HttpServlet {
         }
 
         boolean onlyMine = ROLE_MANAGER.equals(roleId);
-        List<PersonalMessage> rows = new ArrayList<PersonalMessage>();
-        int page = 1;
-        int pageSize = 100;
-        long total = 0;
-        while (true) {
-            query.setPage(page);
-            query.setPageSize(pageSize);
-            MessagePage result = inbox
-                    ? messageDao.searchInbox(userId, query)
-                    : messageDao.searchOutbox(userId, onlyMine, query);
-            total = result.getTotal();
-            if (result.getList().isEmpty()) {
-                break;
-            }
-            rows.addAll(result.getList());
-            if ((long) page * pageSize >= total || rows.size() >= 5000) {
-                break;
-            }
-            page++;
-        }
+        List<PersonalMessage> rows = collectAll(query, userId, inbox, onlyMine);
 
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("编号,标题,类型,发送人ID,接收人ID,状态,发送时间,阅读时间,正文\r\n");
@@ -704,6 +722,82 @@ public class MessageServlet extends HttpServlet {
         OutputStream output = response.getOutputStream();
         output.write(bytes);
         output.flush();
+    }
+
+    /**
+     * 按同一筛选条件和排序分批取全量结果（上限5000条），列表导出与打印共用，
+     * 保证 CSV、打印与筛选结果的数据范围一致。
+     */
+    private List<PersonalMessage> collectAll(MessageQuery query, int userId,
+                                             boolean inbox, boolean onlyMine)
+            throws SQLException {
+
+        List<PersonalMessage> rows = new ArrayList<PersonalMessage>();
+        int page = 1;
+        int pageSize = 100;
+        while (true) {
+            query.setPage(page);
+            query.setPageSize(pageSize);
+            MessagePage result = inbox
+                    ? messageDao.searchInbox(userId, query)
+                    : messageDao.searchOutbox(userId, onlyMine, query);
+            long total = result.getTotal();
+            if (result.getList().isEmpty()) {
+                break;
+            }
+            rows.addAll(result.getList());
+            if ((long) page * pageSize >= total || rows.size() >= 5000) {
+                break;
+            }
+            page++;
+        }
+        return rows;
+    }
+
+    /**
+     * 打印用报表：返回当前筛选条件下的**全部**结果，与当前页码、每页条数无关。
+     * 收件箱/发件箱权限范围与列表、CSV 完全一致。
+     */
+    private void report(HttpServletRequest request, HttpServletResponse response,
+                        int userId, String roleId, boolean inbox)
+            throws IOException, SQLException, JSONException {
+
+        if (!inbox && ROLE_USER.equals(roleId)) {
+            reject(response, 403, "您没有权限查看发件记录");
+            return;
+        }
+
+        MessageQuery query = parseQuery(request, response);
+        if (query == null) {
+            return;
+        }
+
+        boolean onlyMine = ROLE_MANAGER.equals(roleId);
+        List<PersonalMessage> rows = collectAll(query, userId, inbox, onlyMine);
+
+        JSONArray list = new JSONArray();
+        for (PersonalMessage message : rows) {
+            list.put(inbox ? inboxRow(message) : outboxRow(message));
+        }
+
+        JSONObject data = new JSONObject();
+        data.put("total", rows.size());
+        data.put("roleId", Integer.parseInt(roleId));
+        data.put("list", list);
+        ok(response, data);
+    }
+
+    private JSONObject outboxRow(PersonalMessage message) throws JSONException {
+        JSONObject row = new JSONObject();
+        row.put("id", message.getId());
+        row.put("title", nullToEmpty(message.getTitle()));
+        row.put("content", nullToEmpty(message.getContent()));
+        row.put("messageType", nullToEmpty(message.getMessageType()));
+        row.put("recipientId", message.getRecipientId());
+        row.put("sendStatus", nullToEmpty(message.getSendStatus()));
+        row.put("sentAt", formatTime(message.getSentAt()));
+        row.put("createdAt", formatTime(message.getCreatedAt()));
+        return row;
     }
 
     private String csvText(Object value) {
