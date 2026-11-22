@@ -10,6 +10,8 @@ public class Db {
     private Statement statement;
 
     public Db(String dbName) throws SQLException {
+        // 验收副本可通过本机配置选择独立数据库；未配置时沿用调用方库名。
+        dbName = setting("name", "GH_DB_NAME", dbName);
         if (dbName == null || !dbName.matches("[A-Za-z0-9_]+")) {
             throw new SQLException("数据库名称无效");
         }

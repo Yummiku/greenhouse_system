@@ -248,3 +248,36 @@ Java已变化，需要停止Tomcat、复制文件、重新构建项目与war exp
 用户已反馈地图功能仍有问题；本轮保留相关实现并标记待修复，不认定地图完整运行验收通过。
 问题的具体表现和原因须后续复现，不将其预先归因为网络、坐标或地图服务配置。
 本机数据库连接配置和个人运行配置继续排除，不随提交上传。
+
+十六、个人消息模块合入（2026-11-22）
+
+本次将已整改的消息模块并入主机项目，保留既有大棚档案、设备归属、种植批次及菜单功能。
+原消息提交为efa8524，本地验收分支另增加操作失败弹窗及独立数据库名称配置。
+web.xml同时保留/api/users、/api/messages和/api/environment，不重复注册Servlet。
+
+数据库准备：
+1. 已有用户管理表及status字段的数据库，先备份，再执行sql/51_personal_message.sql和sql/52_personal_message_menu.sql。
+   51只建personal_message表；表已存在时不删除、不清空记录。52补消息中心及角色菜单授权。
+2. sql/53_personal_message_demo.sql仅为可选演示数据；按admin、worker用户名查有效账号实际id。
+   缺少有效账号会提示并跳过，重复执行不重复生成同名演示消息。需要更换测试账号时修改查询中的用户名。
+3. 不重跑01，不重建账号或业务表。原SQL默认USE greenhouse_system；验收库执行时改为USE greenhouse_system_test。
+   Navicat数据库下拉框不能覆盖脚本内的USE指令。
+
+连接配置与部署：
+1. 私有配置web/WEB-INF/greenhouse.local.properties可以增加greenhouse.db.name=greenhouse_system_test。
+   Db统一读取该库名；未配置时沿用调用方的库名。JVM属性、环境变量GH_DB_NAME优先于文件。
+2. 保留本机host/port/user/password，私有配置不提交。停止Tomcat后重新构建项目与war exploded，再启动并重新登录。
+3. 正常项目默认上下文/greenhouse_system、端口9999；验收副本使用/greenhouse_system_test、端口10000。
+4. 浏览器Ctrl+F5刷新消息JS；收件箱路径/maintain/message/message_inbox.jsp，发件路径/maintain/message/message_compose.jsp。
+
+权限及操作：
+角色1/2/3均有本人收件箱，角色1查看全部发件，角色2只查看本人创建的发件，角色3发件接口返回403。
+创建和修改草稿、最终发送均检查有效账号；接收人停用后发送返回409，草稿和发送时间保持不变。
+收件人只可删除自己的已读消息；草稿可编辑、删除；已发送消息正文不可改，可按权限撤回。
+CSV和报表接口按权限及条件分批取数；打印覆盖跨页记录，当前读取上限5000条，大数据场景需另行核验。
+发送、保存、撤回、删除、已读及打印等主动操作失败时弹窗，并保留页面错误文字与后台具体原因。
+
+本轮复测范围：组长在greenhouse_system_test中确认四项初审整改通过。
+发件箱打印截图显示12条，收件箱跨页打印按用户反馈通过；演示消息24/25关联实际接收人id5，重复执行未增加记录，
+缺失账号测试副本不插入消息；三角色菜单及跳转由用户确认正常。完整消息模块及地图等其他功能不据此自动认定通过。
+原有地图待修复说明仍然有效，本次不包含地图修复。
