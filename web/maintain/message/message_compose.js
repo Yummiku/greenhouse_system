@@ -34,6 +34,11 @@
     var editingId = 0;
     var TYPE_LABELS = { notice: "通知", task: "任务", system: "系统" };
 
+    function showFailure(target, message) {
+        target.textContent = message;
+        window.alert(message);
+    }
+
     function typeLabel(type) {
         return TYPE_LABELS[type] || type || "未分类";
     }
@@ -62,9 +67,7 @@
             await loadOutbox();
         } catch (error) {
             button.disabled = false;
-            outboxStatus.textContent = error.status === 409
-                    ? "这条消息状态已变化，请刷新后重试。"
-                    : "发送失败：" + error.message;
+            showFailure(outboxStatus, "发送失败：" + (error.message || "请稍后重试。"));
         }
     }
 
@@ -85,10 +88,7 @@
             await loadOutbox();
         } catch (error) {
             button.disabled = false;
-            outboxStatus.textContent = error.status === 403
-                    ? "您没有权限撤回这条消息。"
-                    : (error.status === 409 ? "这条消息当前不能撤回。"
-                            : "撤回失败：" + error.message);
+            showFailure(outboxStatus, "撤回失败：" + (error.message || "请稍后重试。"));
         }
     }
 
@@ -103,10 +103,7 @@
             await loadOutbox();
         } catch (error) {
             button.disabled = false;
-            outboxStatus.textContent = error.status === 403
-                    ? "您没有权限删除这条草稿。"
-                    : (error.status === 409 ? "只有草稿可以删除。"
-                            : "删除失败：" + error.message);
+            showFailure(outboxStatus, "删除失败：" + (error.message || "请稍后重试。"));
         }
     }
 
@@ -243,12 +240,12 @@
         var recipientId = recipientInput.value.trim();
 
         if (title === "") {
-            formStatus.textContent = "请填写消息标题。";
+            showFailure(formStatus, "请填写消息标题。");
             titleInput.focus();
             return;
         }
         if (!/^\d+$/.test(recipientId) || Number(recipientId) <= 0) {
-            formStatus.textContent = "请填写有效的接收人ID。";
+            showFailure(formStatus, "请填写有效的接收人ID。");
             recipientInput.focus();
             return;
         }
@@ -291,10 +288,7 @@
             }
             await loadOutbox();
         } catch (error) {
-            formStatus.textContent = error.status === 403
-                    ? "您没有权限编辑这条草稿。"
-                    : (error.status === 409 ? "已发送的消息不能再修改。"
-                            : "保存失败：" + error.message);
+            showFailure(formStatus, "保存失败：" + (error.message || "请稍后重试。"));
         } finally {
             saveButton.disabled = false;
         }
@@ -338,7 +332,7 @@
             reportRows = data.list || [];
             reportTotal = Number(data.total == null ? reportRows.length : data.total);
         } catch (error) {
-            outboxStatus.textContent = "打印数据获取失败：" + error.message;
+            showFailure(outboxStatus, "打印数据获取失败：" + (error.message || "请稍后重试。"));
             if (printButton) printButton.disabled = false;
             return;
         }
@@ -389,7 +383,7 @@
 
         var printWindow = window.open("", "_blank", "width=980,height=720");
         if (!printWindow) {
-            outboxStatus.textContent = "浏览器拦截了打印窗口，请允许弹出窗口后重试。";
+            showFailure(outboxStatus, "浏览器拦截了打印窗口，请允许弹出窗口后重试。");
             return;
         }
         printWindow.document.open();

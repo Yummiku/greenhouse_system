@@ -35,6 +35,11 @@
 
     var TYPE_LABELS = { notice: "通知", task: "任务", system: "系统" };
 
+    function showFailure(target, message) {
+        target.textContent = message;
+        window.alert(message);
+    }
+
     function typeLabel(type) {
         return TYPE_LABELS[type] || type || "未分类";
     }
@@ -97,6 +102,7 @@
             errorText.textContent = error.status === 403
                     ? "您没有权限查看这条消息。"
                     : "详情加载失败：" + error.message;
+            window.alert(errorText.textContent);
             if (window.jQuery) {
                 window.jQuery("#message_detail_modal").modal("show");
             }
@@ -149,9 +155,7 @@
             statusText.textContent = "已标为已读。";
         } catch (error) {
             button.disabled = false;
-            statusText.textContent = error.status === 403
-                    ? "您没有权限标记这条消息。"
-                    : "标记已读失败：" + error.message;
+            showFailure(statusText, "标记已读失败：" + (error.message || "请稍后重试。"));
         }
     }
 
@@ -187,10 +191,7 @@
             statusText.textContent = "消息已删除。";
         } catch (error) {
             button.disabled = false;
-            statusText.textContent = error.status === 403
-                    ? "您没有权限删除这条消息。"
-                    : (error.status === 409 ? "请先标为已读再删除。"
-                            : "删除失败：" + error.message);
+            showFailure(statusText, "删除失败：" + (error.message || "请稍后重试。"));
         }
     }
 
@@ -388,7 +389,7 @@
             reportRows = data.list || [];
             reportTotal = Number(data.total == null ? reportRows.length : data.total);
         } catch (error) {
-            statusText.textContent = "打印数据获取失败：" + error.message;
+            showFailure(statusText, "打印数据获取失败：" + (error.message || "请稍后重试。"));
             if (printButton) printButton.disabled = false;
             return;
         }
@@ -436,7 +437,7 @@
 
         var printWindow = window.open("", "_blank", "width=980,height=720");
         if (!printWindow) {
-            statusText.textContent = "浏览器拦截了打印窗口，请允许弹出窗口后重试。";
+            showFailure(statusText, "浏览器拦截了打印窗口，请允许弹出窗口后重试。");
             return;
         }
         printWindow.document.open();
