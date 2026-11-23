@@ -1,0 +1,25 @@
+[hidden] { display: none !important; }
+.threshold-filters, .threshold-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 15px 0; }
+.threshold-filters label { min-width: 130px; max-width: 260px; flex: 1; }
+.threshold-table { min-width: 1100px; }
+.threshold-table td { vertical-align: middle !important; overflow-wrap: anywhere; max-width: 280px; }
+.threshold-table th, .threshold-table button { white-space: nowrap; }
+.threshold-table button { margin: 3px; }
+.threshold-table small { display: block; max-width: 250px; }
+.threshold-charts { display: flex; gap: 24px; flex-wrap: wrap; }
+.threshold-charts section { flex: 1; min-width: 240px; }
+.threshold-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.threshold-bar-label { width: 95px; }
+.threshold-track { flex: 1; background: #eee; height: 16px; }
+.threshold-fill { background: #159c89; height: 16px; }
+.threshold-details { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
+.threshold-details dd, .threshold-details dt { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+#threshold-dialog { width: min(680px,94vw); max-height: 90vh; overflow: auto; padding: 24px; border: 1px solid #bbb; border-radius: 8px; }
+#threshold-dialog::backdrop { background: #0006; }
+#threshold-dialog label { display: block; margin: 12px 0; }
+#threshold-dialog-status { color: #a02222; white-space: pre-wrap; }
+#threshold-status { white-space: pre-wrap; }
+@media (max-width:600px) { .threshold-filters label { min-width: 100%; max-width: none; } }
+
+#threshold-dialog-x { position: sticky; top: 0; float: right; z-index: 1; font-size: 24px; line-height: 1; }
+#threshold-dialog-title { padding-right: 55px; }
