@@ -1,0 +1,69 @@
+{
+  "contract_version": "1.0",
+  "effective_date": "2026-11-23",
+  "owner": "李慧颖",
+  "participants": ["潘雨希", "唐昕煜", "李慧颖"],
+  "status": "李慧颖确定的本周执行基线；不代表其他成员已反馈或集成验收通过",
+  "source_main_commit": "06fd6fc",
+  "inspected_environment_branch": "origin/feature/w12-environment",
+  "inspected_environment_commit": "3326aa4ef17055f64d0a6b5d8900dfa3239d9bea",
+  "ids": {
+    "greenhouse_id": "greenhouse_file.id；本机数据库的内部ID，必须从真实接口解析",
+    "greenhouse_code": "greenhouse_file.greenhouse_code；展示与跨环境定位用业务编号",
+    "device_pk": "device_file.id；绑定和上传使用的设备内部ID",
+    "device_code": "接口名称；对应device_file.device_id业务编号，不能当device_pk",
+    "sample_id": "environment_sample.id；唐的分支已定义，主线尚无采样业务表安装保证",
+    "sample_key": "采集端唯一重试键，不是sample_id"
+  },
+  "metrics": [
+    {"code": "air_temperature", "name": "空气温度", "unit": "℃"},
+    {"code": "air_humidity", "name": "空气湿度", "unit": "%"},
+    {"code": "soil_temperature", "name": "土壤温度", "unit": "℃"},
+    {"code": "soil_moisture", "name": "土壤湿度", "unit": "%"},
+    {"code": "illuminance", "name": "光照强度", "unit": "lx"}
+  ],
+  "binding": {
+    "table": "greenhouse_device_binding",
+    "unique_key": "device_pk PRIMARY KEY",
+    "cardinality": "一台设备当前最多绑定一个大棚、一个指标；一棚可绑定多台设备",
+    "sensor_type": "sensor",
+    "control_type": "control",
+    "control_metric": "control",
+    "control_unit": "-",
+    "control_can_upload_samples": false,
+    "unit_authority": "后台按metric_type写入，客户端不得自行改变或换算",
+    "rebind": "先解绑再绑定，保留历史；新采样使用新归属，旧采样不得按新归属回写",
+    "invalid_greenhouse": "不存在、已删除或非enabled大棚拒绝新增绑定和新采样入库；历史保留"
+  },
+  "implemented_endpoints": [
+    {"method": "GET", "path": "{context}/api/greenhouses?action=list&status=enabled&page=1&size=100", "response_data": "object: total, items", "availability": "main", "auth": "PC Session，角色1/2/3"},
+    {"method": "GET", "path": "{context}/api/greenhouse-resources?action=devices&greenhouse_id={greenhouse_id}", "response_data": "array", "availability": "main", "auth": "PC Session，角色1/2/3"},
+    {"method": "POST", "path": "{context}/api/greenhouse-resources?action=bind", "fields": ["greenhouse_id", "device_pk", "metric_type", "csrf_token"], "availability": "main", "auth": "PC Session，角色1/2，CsrfGuard"},
+    {"method": "POST", "path": "{context}/api/greenhouse-resources?action=unbind", "fields": ["greenhouse_id", "device_pk", "csrf_token"], "availability": "main", "auth": "PC Session，角色1/2，CsrfGuard"},
+    {"method": "GET", "path": "{context}/api/greenhouse-resources?action=device_history&device_pk={device_pk}", "availability": "main", "auth": "PC Session，角色1/2/3"},
+    {"method": "GET", "path": "{context}/api/threshold?action=list", "availability": "lihuiying/threshold-rules", "auth": "PC Session"}
+  ],
+  "environment_ingest": {
+    "method": "POST",
+    "path": "{context}/api/environment/ingest",
+    "availability": "唐分支有实现，未合入main，当前主线不可宣称可上传",
+    "authentication": "X-Collector-Key；本机私有配置，禁止写进文档、Git或截图",
+    "body": {"greenhouse_id": "实际解析值", "device_pk": "实际解析值", "source": "simulated或real", "samples": [{"sample_key": "8至128位唯一键，重试保持不变", "metric_type": "必须等于该device_pk的绑定指标", "value": "有限数字，0合法", "sample_time": "yyyy-MM-dd HH:mm:ss，Asia/Shanghai"}]},
+    "units": "不接受客户端自报单位，按绑定和指标字典确定",
+    "qt_metrics": "每份设备配置metrics数组只能有一个元素，并与绑定一致；五指标用五台sensor分组上传",
+    "source_codes": ["simulated", "real", "manual"],
+    "source_rule": "Qt模拟固定simulated；real仅真实采集，manual仅人工接口，禁用hardware别名",
+    "required_fixes_in_tang_branch": [
+      "显式校验每条metric_type，不允许把错误指标静默改写成绑定指标",
+      "上传前校验大棚enabled、未删除和sensor绑定有效",
+      "同sample_key同内容重复不入库；异内容拒绝；并发唯一冲突后重查内容而非一律算重复",
+      "幂等比较包含归属、设备、指标、数值、采样时间和source",
+      "为报警交接提供真实成功入库sample_id或其可查询映射，不能仅给accepted数量"
+    ],
+    "current_branch_response": {"result_code": 0, "result_msg": "已处理", "data": {"accepted": 1, "duplicated": 0, "rejected": 0}},
+    "response_notice": "以上为唐分支代码的响应结构示意，非今晚真实上传回执；新sample_id映射和报警回调周二另定"
+  },
+  "roles": {"1": "维护与只读", "2": "维护与只读", "3": "只读，维护403"},
+  "pending_tuesday": ["采样保存后唯一报警判定入口", "sample_id交接及部分失败映射", "迟到样本稳定顺序", "判定失败待处理及重试", "与肖的驾驶舱与日志接口"],
+  "verification": "只读接口和绿色布局已在独立副本库实测；唐的Qt上传和报警生成未联调"
+}
