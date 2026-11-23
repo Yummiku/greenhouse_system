@@ -58,6 +58,7 @@ public class ServletAction extends HttpServlet {
             HttpSession session = request.getSession();
             request.changeSessionId();
             session.setAttribute("loginUser", user);
+            session.removeAttribute("userCsrfToken");
 
             // 跳转到系统首页
             response.sendRedirect(
