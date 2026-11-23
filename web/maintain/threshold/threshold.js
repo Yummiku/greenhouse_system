@@ -5,6 +5,7 @@
     const api = base + "/api/threshold";
     const filters = document.getElementById("threshold-query");
     const dialog = document.getElementById("threshold-dialog");
+    const modal = jQuery(dialog).modal({ show: false, backdrop: "static", keyboard: true });
     const form = document.getElementById("threshold-form");
     const save = document.getElementById("threshold-save");
     const close = document.getElementById("threshold-close");
@@ -31,6 +32,9 @@
     let dialogGeneration = 0;
     let writing = false;
     let optionsLoaded = false;
+    let panelOpen = false;
+    let savedClose = false;
+    let readAt = "";
 
     function element(tag, text, className) {
         const node = document.createElement(tag);
@@ -113,21 +117,31 @@
                 [label, data.filter(rule => metricName(rule) === label).length]), data.length));
     }
 
-    function button(text, action) {
-        const node = element("button", text, "btn default btn-sm");
+    function button(text, action, className = "btn-default") {
+        const node = element("button", text, "btn " + className + " btn-sm");
         node.type = "button";
         node.onclick = action;
         return node;
     }
 
     function actions(cell, rule) {
+        const group = element("div", undefined, "threshold-row-actions");
+        cell.append(group);
+        cell = group;
         cell.append(button("详情", () => openRule(rule.id, false)));
         if (!canManage) return;
         cell.append(button("编辑", () => openRule(rule.id, true)));
+        const remove = button("删除", async () => {
+            if (confirm("确认删除规则【" + rule.name + "】吗？\n" + houseName(rule) + "／" + metricName(rule))) {
+                await write("delete", { id: rule.id }, remove);
+            }
+        }, "btn-danger");
+        remove.disabled = rule.enabled;
+        cell.append(remove);
         const conflict = rules.find(other => other.id !== rule.id && other.enabled &&
             selectionKey(other) === selectionKey(rule));
         const toggle = button(rule.enabled ? "停用" : "启用",
-            () => write(rule.enabled ? "disable" : "enable", { id: rule.id }, toggle));
+            () => write(rule.enabled ? "disable" : "enable", { id: rule.id }, toggle), rule.enabled ? "btn-default" : "blue");
         const reason = !rule.enabled && (!valid(rule) ? "所属大棚已失效，不能启用"
             : conflict ? "请先停用规则【" + conflict.name + "】（编号" + conflict.id + "）" : "");
         if (reason) {
@@ -140,13 +154,6 @@
             wrapper.append(toggle);
             cell.append(wrapper, element("small", reason));
         } else cell.append(toggle);
-        const remove = button("删除", async () => {
-            if (confirm("确认删除规则【" + rule.name + "】吗？\n" + houseName(rule) + "／" + metricName(rule))) {
-                await write("delete", { id: rule.id }, remove);
-            }
-        });
-        remove.disabled = rule.enabled;
-        cell.append(remove);
         if (rule.enabled) cell.append(element("small", "请先停用规则再删除"));
     }
 
@@ -173,16 +180,30 @@
         document.getElementById("threshold-prev").disabled = page === 1;
         document.getElementById("threshold-next").disabled = page === pages;
         statistics(data, document.getElementById("threshold-summary"), document.getElementById("threshold-charts"));
+        const enabled = data.filter(rule => rule.enabled).length;
+        const invalid = data.filter(rule => rule.enabled && !valid(rule)).length;
+        for (const [id, count] of [["total", data.length], ["enabled", enabled],
+            ["disabled", data.length - enabled], ["invalid", invalid]]) {
+            document.getElementById("threshold-" + id).textContent = String(count);
+        }
+        document.getElementById("threshold-result-count").textContent = "当前查询共" + data.length + "条规则";
+        document.getElementById("threshold-statistics-scope").textContent = "统计范围：" + criteria() + "　读取时间：" + readAt;
     }
 
     async function reload() {
         refreshing = true;
+        document.getElementById("threshold-refresh").disabled = true;
+        document.getElementById("threshold-size").disabled = true;
+        document.getElementById("threshold-prev").disabled = true;
+        document.getElementById("threshold-next").disabled = true;
+        filters.querySelectorAll("button").forEach(node => { node.disabled = true; });
         document.getElementById("threshold-export").disabled = true;
         document.getElementById("threshold-print").disabled = true;
         try {
             const data = await request(api + "?action=list");
             rules = data;
             loaded = true;
+            readAt = new Date().toLocaleString("zh-CN");
             houseOptions();
             render();
             return true;
@@ -191,11 +212,19 @@
             document.getElementById("threshold-rows").replaceChildren();
             document.getElementById("threshold-charts").replaceChildren();
             document.getElementById("threshold-summary").textContent = "读取失败，统计不可用";
+            for (const id of ["total", "enabled", "disabled", "invalid"]) document.getElementById("threshold-" + id).textContent = "—";
+            document.getElementById("threshold-statistics-scope").textContent = "统计范围：" + criteria() + "　读取失败，请重试";
+            document.getElementById("threshold-result-count").textContent = "读取失败，条数不可用";
             document.getElementById("threshold-page").textContent = "读取失败";
+            document.getElementById("threshold-prev").disabled = true;
+            document.getElementById("threshold-next").disabled = true;
             message.textContent = error.message;
             return false;
         } finally {
             refreshing = false;
+            document.getElementById("threshold-refresh").disabled = false;
+            filters.querySelectorAll("button").forEach(node => { node.disabled = false; });
+            document.getElementById("threshold-size").disabled = !loaded;
             document.getElementById("threshold-export").disabled = !loaded;
             document.getElementById("threshold-print").disabled = !loaded;
         }
@@ -218,7 +247,7 @@
                 if (!data.items.length) break;
                 p++;
             } while (list.length < total);
-            if (generation !== dialogGeneration || !dialog.open) return;
+            if (generation !== dialogGeneration || !panelOpen) return;
             houses = list.filter(house => house.status === "enabled");
             houseOptions();
             const select = form.elements.greenhouseId;
@@ -229,7 +258,7 @@
             save.disabled = !optionsLoaded;
             dialogMessage.textContent = optionsLoaded ? "" : "无可选大棚，请先完成大棚档案。";
         } catch (error) {
-            if (generation !== dialogGeneration || !dialog.open) return;
+            if (generation !== dialogGeneration || !panelOpen) return;
             form.elements.greenhouseId.replaceChildren(new Option("加载失败，请重试", ""));
             retry.hidden = false;
             dialogMessage.textContent = "大棚选项加载失败，请重试。";
@@ -242,9 +271,11 @@
         detail.replaceChildren();
         detail.hidden = true;
         form.hidden = true;
+        save.hidden = true;
         document.getElementById("threshold-dialog-title").textContent = title;
         close.textContent = "关闭";
-        if (!dialog.open) dialog.showModal();
+        panelOpen = true;
+        modal.modal("show");
     }
     function addDetail(label, value) {
         detail.append(element("dt", label), element("dd", value == null || value === "" ? "未记录" : String(value)));
@@ -264,11 +295,11 @@
         dialogMessage.textContent = "正在读取…";
         try {
             const rule = await request(api + "?action=detail&id=" + encodeURIComponent(id));
-            if (generation !== dialogGeneration || !dialog.open) return;
+            if (generation !== dialogGeneration || !panelOpen) return;
             dialogMessage.textContent = "";
             if (edit) {
                 editing = rule;
-                form.reset(); form.hidden = false;
+                form.reset(); form.hidden = false; save.hidden = false;
                 form.querySelector("p").textContent = "所属大棚与监测指标保持不变。";
                 form.elements.name.value = rule.name;
                 form.elements.greenhouseId.replaceChildren(new Option(houseName(rule), rule.greenhouseId));
@@ -293,7 +324,7 @@
                 ]) addDetail(label, value);
             }
         } catch (error) {
-            if (generation === dialogGeneration && dialog.open) fail(dialogMessage, error.message);
+            if (generation === dialogGeneration && panelOpen) fail(dialogMessage, error.message);
         }
     }
 
@@ -309,7 +340,11 @@
                     method: "POST", body: new URLSearchParams({ ...values, csrf_token: token })
                 });
             } catch (error) { fail(target, error.message); return null; }
-            if (action === "create" || action === "edit") dialog.close();
+            if (action === "create" || action === "edit") {
+                savedClose = true;
+                modal.modal("hide");
+                savedClose = false;
+            }
             const success = { create: "新增成功，当前为停用状态", edit: "修改成功",
                 enable: "启用成功", disable: "停用成功", delete: "删除成功" }[action];
             const refreshed = await reload();
@@ -372,15 +407,16 @@
         }
     });
     document.getElementById("threshold-dialog-x").onclick = () => { if (!writing) close.click(); };
-    close.onclick = () => { dialogGeneration++; dialog.close(); };
-    dialog.addEventListener("cancel", event => {
-        if (writing) event.preventDefault();
-        else dialogGeneration++;
+    close.onclick = () => { if (!writing) modal.modal("hide"); };
+    modal.on("hide.bs.modal", event => {
+        if (writing && !savedClose) { event.preventDefault(); return; }
+        panelOpen = false;
+        dialogGeneration++;
     });
     if (canManage) {
         document.getElementById("threshold-new").onclick = async () => {
             openPanel("新增阈值规则");
-            editing = null; form.reset(); form.hidden = false;
+            editing = null; form.reset(); form.hidden = false; save.hidden = false;
             form.querySelector("p").textContent = "保存后为停用状态，需在列表中启用后供报警流程使用。";
             form.elements.metric.disabled = false; form.elements.unit.value = "℃";
             close.textContent = "取消";
@@ -409,10 +445,9 @@
     document.getElementById("threshold-size").onchange = event => { size = Number(event.target.value); page = 1; render(); };
     document.getElementById("threshold-prev").onclick = () => { page--; render(); };
     document.getElementById("threshold-next").onclick = () => { page++; render(); };
-    document.getElementById("threshold-stats").onclick = () => {
-        if (!loaded) { fail(message, "列表尚未成功加载，请查询后重试"); return; }
-        const region = document.getElementById("threshold-statistics");
-        region.hidden = !region.hidden;
+    document.getElementById("threshold-refresh").onclick = async () => {
+        if (await reload()) message.textContent = "已刷新当前查询结果";
+        else alert(message.textContent);
     };
 
     function criteria() {
