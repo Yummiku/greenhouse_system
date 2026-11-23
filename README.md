@@ -89,3 +89,17 @@ Java 编译、Tomcat 启动和业务验收需在各成员的开发环境执行�
 
 副本可在私有配置中设置 `greenhouse.db.name=greenhouse_system_test`，统一选择验收库；未配置时沿用源码库名。不要提交本机密码或 `greenhouse.local.properties`。
 本轮组长确认通过的整改范围为账号状态限制、跨页打印、演示账号解析与重复执行、三角色消息菜单。大批量报表目前有5000条读取上限，完整模块回归和其他边界按实际运行另行确认；地图待修复状态保持不变。详细步骤见 `readme.txt` 第十六部分。
+
+## 默认绿色主题
+
+2026年11月23日起，公共业务页面和登录页默认加载 `web/assets/admin/layout/css/themes/green.css`。
+该文件沿用原 Metronic 主题结构，统一墨绿色导航、深绿色主按钮、浅绿色统计区域和表头；删除及错误保留红色，警告和多类别图表保留各自含义。
+已有 `btn blue`、`btn green` 等类名可以继续使用，由当前主题统一配色，无须修改按钮事件或业务接口。
+
+主题入口是 `web/home/frame/frame_style.jsp` 和 `web/home/main/login.jsp` 中的 `style_color` 样式引用。
+原 `darkblue.css` 保留备用；恢复原主题时，将两处引用的 `green.css?v=20261123` 改回 `darkblue.css`。
+无需加载额外的 `greenhouse-green.css` 覆盖文件，也不要修改 Bootstrap 或 Metronic 组件基础文件。
+
+本次只同步主题和加载配置，不包含验收副本中的环境采样、阈值业务代码，也没有调整模块统计与表单的位置。
+部署时同步主题 CSS 和两份 JSP，更新资源或重启 Tomcat 后按 Ctrl+F5 刷新，无需运行 SQL。
+浏览器检查使用现有 JSP 页面结构和实际样式文件；实际 Tomcat 登录、权限及数据库业务仍按各环境运行验收。
