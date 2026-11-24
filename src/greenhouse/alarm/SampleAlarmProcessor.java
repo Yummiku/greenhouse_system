@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 /**
  * Frozen server-to-server Java contract for the same deployed application.
- * No event processor or HTTP alarm endpoint is implemented by this interface.
+ * JdbcSampleAlarmProcessor implements it; this interface is not an HTTP upload endpoint.
  * The implementation must reread the committed sample by its database ID and perform
  * idempotent, ordered processing; callers must retain failed IDs for retry.
  */
