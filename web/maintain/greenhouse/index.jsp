@@ -154,12 +154,28 @@
                                 <option value="asc">升序</option></select
                             ><button class="btn default">查询</button>
                         </form>
+                        <a href="map.jsp" class="btn default">位置地图</a>
+                        <a href="devices.jsp" class="btn default">设备归属</a>
+                        <a href="batches.jsp" class="btn default">种植批次</a>
                         <button id="add" class="btn blue" hidden>新增大棚</button
                         ><button id="export" class="btn default">导出全部筛选结果</button
                         ><button id="print" class="btn default">打印预览</button>
                     </section>
                     <p id="msg" role="status"></p>
-                    <section id="stats" class="portlet light bordered"></section>
+                    <section class="portlet light bordered" aria-label="当前筛选统计">
+                        <p id="stats" aria-live="polite"></p>
+                        <h3>大棚状态分布</h3>
+                        <svg id="statusChart" viewBox="0 0 600 160" role="img" aria-label="等待查询状态分布" style="width:100%;max-width:600px;height:auto">
+                            <title id="statusChartTitle">等待查询状态分布</title>
+                            <text x="0" y="35">启用</text>
+                            <rect id="enabledBar" x="65" y="12" width="0" height="30" fill="#16805d" />
+                            <text id="enabledLabel" x="65" y="65"></text>
+                            <text x="0" y="105">停用</text>
+                            <rect id="disabledBar" x="65" y="82" width="0" height="30" fill="#9b590d" />
+                            <text id="disabledLabel" x="65" y="135"></text>
+                        </svg>
+                        <p id="chartNote">按当前已应用条件统计；逻辑删除档案不参与。</p>
+                    </section>
                     <p id="printinfo" style="display: none"></p>
                     <section class="portlet light bordered">
                         <div class="table-responsive">
@@ -206,9 +222,11 @@
                                     required
                                     maxlength="255" /></label
                             ><label
-                                >面积(m²)<input
+                                >面积(m² 自动计算)<input
                                     class="form-control"
                                     name="area"
+                                    readonly
+                                    placeholder="填写长、宽后自动计算"
                                     type="number"
                                     min="0.01"
                                     step="0.01"
@@ -244,7 +262,7 @@
                             ><label
                                 >备注<input class="form-control" name="remark" maxlength="1000"
                             /></label>
-                            <p>面积独立保存，不按长×宽覆盖。</p>
+                            <p id="areaHint">面积按长度×宽度计算，四舍五入保留两位小数。</p>
                             <button class="btn default">保存</button
                             ><button
                                 class="btn default"
@@ -284,6 +302,34 @@
                 }
                 let operatorName = "";
 
+                function updateArea() {
+                    const form = $("editor");
+                    function centimeters(name) {
+                        const value = form.elements.namedItem(name).value.trim();
+                        if (!/^(?:[0-9]+|[0-9]*\.[0-9]{1,2})$/.test(value)) return null;
+                        const parts = value.split(".");
+                        const amount = BigInt(parts[0] || "0") * 100n + BigInt((parts[1] || "").padEnd(2, "0"));
+                        return amount > 0n && amount <= 999999999999n ? amount : null;
+                    }
+                    const length = centimeters("length"), width = centimeters("width");
+                    let message = "请填写有效的长、宽，最多两位小数。";
+                    if (length !== null && width !== null) {
+                        const cents = (length * width + 50n) / 100n;
+                        if (cents > 0n && cents <= 999999999999n) {
+                            form.elements.namedItem("area").value = String(cents / 100n) + "." + String(cents % 100n).padStart(2, "0");
+                            text("areaHint", "面积按长度×宽度计算，四舍五入保留两位小数。");
+                            return true;
+                        }
+                        message = "计算面积需在0.01至9999999999.99平方米之间，请调整长、宽。";
+                    }
+                    form.elements.namedItem("area").value = "";
+                    text("areaHint", message);
+                    return false;
+                }
+                ["length", "width"].forEach(name => {
+                    $("editor").elements.namedItem(name).addEventListener("input", updateArea);
+                });
+
                 function conditions() {
                     return JSON.stringify(applied);
                 }
@@ -314,6 +360,9 @@
                             b.onclick = () => fn().catch((e) => text("msg", e.message));
                             td.append(b);
                         }
+                        [ ["设备", "devices.jsp"], ["种植", "batches.jsp"], ["地图", "map.jsp"] ].forEach(([label, page]) => {
+                            btn(label, async () => { location.href = page + "?greenhouse_id=" + encodeURIComponent(r.id); });
+                        });
                         btn("详情", async () => {
                             const x = await api("detail", { id: r.id });
                             text(
@@ -335,6 +384,7 @@
                                     }
                                 });
                                 text("formmsg", "");
+                                updateArea();
                                 $("edit").showModal();
                             });
                             btn("删除", async () => {
@@ -344,6 +394,7 @@
                                 try {
                                     await GHApi.post("/api/greenhouses", {
                                         action: "delete",
+                                        csrf_token: csrfToken,
                                         id: r.id,
                                     });
                                 } catch (error) {
@@ -361,14 +412,35 @@
                         $("rows").append(tr);
                     });
                 }
+                function renderStatusChart(data) {
+                    const enabled = Number(data.enabled), disabled = Number(data.disabled);
+                    const sum = enabled + disabled;
+                    ["enabled", "disabled"].forEach((key) => {
+                        const n = Number(data[key]);
+                        $(key + "Bar").setAttribute("width", sum ? String(480 * n / sum) : "0");
+                        text(key + "Label", n + " 座（" + (sum ? (100 * n / sum).toFixed(1) : "0.0") + "%）");
+                    });
+                    const label = "启用 " + enabled + " 座，停用 " + disabled + " 座";
+                    $("statusChart").setAttribute("aria-label", label);
+                    text("statusChartTitle", label);
+                    text("chartNote", sum ? "按当前已应用条件统计；逻辑删除档案不参与。" : "当前条件无可统计档案。");
+                    $("statusChart").hidden = false;
+                }
+                let csrfToken = "";
+                let queryVersion = 0;
                 async function load() {
+                    const version = ++queryVersion;
                     text("msg", "加载中…");
+                    text("stats", "统计加载中…");
+                    $("statusChart").hidden = true;
                     try {
                         const [r, s] = await Promise.all([
                             api("list", { ...applied, page: pageNo }),
                             api("stats", applied),
                         ]);
+                        if (version !== queryVersion) return;
                         total = Number(r.data.total);
+                        renderStatusChart(s.data);
                         render(r.data.items);
                         text(
                             "stats",
@@ -387,6 +459,9 @@
                         $("next").disabled = pageNo * 10 >= total;
                         text("msg", total ? "查询成功" : "暂无符合条件的大棚");
                     } catch (e) {
+                        if (version !== queryVersion) return;
+                        text("stats", "统计暂不可用");
+                        text("chartNote", "查询失败，请重新查询后查看状态分布。");
                         text("msg", e.message);
                     }
                 }
@@ -408,15 +483,18 @@
                     $("editor").reset();
                     $("editor").elements.id.value = "";
                     text("formmsg", "");
+                    updateArea();
                     $("edit").showModal();
                 };
                 $("editor").onsubmit = async (e) => {
                     e.preventDefault();
+                    if (!updateArea()) { text("formmsg", $("areaHint").textContent); return; }
                     const p = Object.fromEntries(new FormData(e.target));
                     try {
                         await GHApi.post("/api/greenhouses", {
                             ...p,
                             action: p.id ? "update" : "create",
+                            csrf_token: csrfToken,
                         });
                         $("edit").close();
                         await load();
@@ -460,7 +538,8 @@
                     try {
                         const r = await api("context");
                         operatorName = r.data.operator || "";
-                        canWrite = r.data.role !== "3";
+                        csrfToken = r.data.csrf_token || "";
+                        canWrite = r.data.role !== "3" && !!csrfToken;
                         $("add").hidden = !canWrite;
                         r.data.users.forEach((u) => {
                             for (const id of ["managerFilter", "managerEdit"]) {

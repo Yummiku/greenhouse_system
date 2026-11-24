@@ -5,6 +5,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.*;
 import java.util.*;
 import org.json.*;
@@ -46,6 +47,10 @@ public class GreenhouseServlet extends HttpServlet {
             reply(p, 405, "维护使用POST", null);
             return;
         }
+        if (WRITES.contains(a) && !CsrfGuard.valid(q)) {
+            reply(p, 403, "页面验证已失效，请刷新后重试", null);
+            return;
+        }
         try (Connection c = new Db("greenhouse_system").getConnection()) {
             if (a.equals("context")) {
                 JSONArray users = rows(
@@ -66,6 +71,7 @@ public class GreenhouseServlet extends HttpServlet {
                     200,
                     "成功",
                     new JSONObject().put("role", role).put("users", users).put("operator", operator)
+                        .put("csrf_token", CsrfGuard.token(s))
                 );
                 return;
             }
@@ -209,6 +215,7 @@ public class GreenhouseServlet extends HttpServlet {
                 );
                 for (int i = 0; i < tables.length(); i++) {
                     String t = tables.getJSONObject(i).getString("TABLE_NAME");
+                    if (t.equals("greenhouse_geo")) continue;
                     if (!t.matches("[A-Za-z0-9_]+")) throw new SQLException("invalid table");
                     if (
                         rows(
@@ -217,6 +224,9 @@ public class GreenhouseServlet extends HttpServlet {
                             List.of(id(q))
                         ).length() > 0
                     ) throw new IllegalArgumentException("存在业务关联，请使用停用");
+                }
+                if (rows(c, "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='greenhouse_geo'", List.of()).length() > 0) {
+                    execute(c, "DELETE FROM greenhouse_geo WHERE greenhouse_id=?", List.of(id(q)));
                 }
                 execute(c, "UPDATE greenhouse_file SET is_deleted=1 WHERE id=?", List.of(id(q)));
                 c.commit();
@@ -237,13 +247,12 @@ public class GreenhouseServlet extends HttpServlet {
             );
             v.add(x);
         }
-        for (String k : List.of("area", "length", "width")) {
-            BigDecimal n = new BigDecimal(param(q, k, ""));
-            if (
-                n.signum() <= 0 || n.scale() > 2 || n.compareTo(new BigDecimal("9999999999.99")) > 0
-            ) throw new IllegalArgumentException("面积和尺寸需为正数，最多两位小数");
-            v.add(n);
-        }
+        BigDecimal length = dimension(q, "length");
+        BigDecimal width = dimension(q, "width");
+        // 面积由后台计算，不采用客户端area字段。
+        v.add(calculatedArea(length, width));
+        v.add(length);
+        v.add(width);
         long manager = Long.parseLong(param(q, "manager_id", "0"));
         String valid =
             "SELECT id FROM todo_login_user " +
@@ -275,6 +284,23 @@ public class GreenhouseServlet extends HttpServlet {
                 ) == 0
             ) throw new IllegalArgumentException("记录不存在或未变化");
         }
+    }
+
+    static BigDecimal dimension(HttpServletRequest request, String name) {
+        String value = param(request, name, "");
+        if (!value.matches("(?:[0-9]+|[0-9]*\\.[0-9]{1,2})"))
+            throw new IllegalArgumentException("长、宽需为正数，最多两位小数");
+        BigDecimal result = new BigDecimal(value);
+        if (result.signum() <= 0 || result.compareTo(new BigDecimal("9999999999.99")) > 0)
+            throw new IllegalArgumentException("长、宽需为正数且不超过9999999999.99米");
+        return result;
+    }
+
+    static BigDecimal calculatedArea(BigDecimal length, BigDecimal width) {
+        BigDecimal area = length.multiply(width).setScale(2, RoundingMode.HALF_UP);
+        if (area.signum() <= 0 || area.compareTo(new BigDecimal("9999999999.99")) > 0)
+            throw new IllegalArgumentException("计算面积需在0.01至9999999999.99平方米之间");
+        return area;
     }
 
     static String select() {
