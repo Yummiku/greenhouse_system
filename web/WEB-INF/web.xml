@@ -154,4 +154,24 @@
 		<servlet-name>UserServlet</servlet-name>
 		<url-pattern>/api/users</url-pattern>
 	</servlet-mapping>
+
+	<!-- 日志中心（登录日志/操作日志）：肖泽亮，只读接口 -->
+	<servlet>
+		<servlet-name>LogServlet</servlet-name>
+		<servlet-class>greenhouse.log.servlet.LogServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>LogServlet</servlet-name>
+		<url-pattern>/api/logs</url-pattern>
+	</servlet-mapping>
+
+	<!-- 驾驶舱（个人/集成）：肖泽亮，个人角色可读，集成仅系统管理员 -->
+	<servlet>
+		<servlet-name>DashboardServlet</servlet-name>
+		<servlet-class>greenhouse.dashboard.servlet.DashboardServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DashboardServlet</servlet-name>
+		<url-pattern>/api/dashboard</url-pattern>
+	</servlet-mapping>
 </web-app>

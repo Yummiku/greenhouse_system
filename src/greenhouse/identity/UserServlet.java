@@ -2,6 +2,7 @@ package greenhouse.identity;
 
 import jakarta.servlet.http.*;
 import org.json.*;
+import greenhouse.log.service.OperationLogger;
 import java.io.*;
 import java.sql.*;
 import java.security.MessageDigest;
@@ -25,8 +26,10 @@ public class UserServlet extends HttpServlet {
         if(!(current instanceof Map)){reply(p,401,"请先登录",null);return;}
         Map<?,?> actor=(Map<?,?>)current;String role=String.valueOf(actor.get("roleId"));
         if(!Set.of("1","2","3").contains(role)){reply(p,403,"角色无效",null);return;}
+        String logAction="维护账号";
         try {
             String action=param(q,"action","context");
+            logAction=userActionName(action);
             if(!READS.contains(action) && !WRITES.contains(action))throw new UserProblem(400,"未注册的用户操作");
             boolean write=WRITES.contains(action);
             if(write && !"POST".equals(q.getMethod())){p.setHeader("Allow","POST");throw new UserProblem(405,"维护操作必须使用POST");}
@@ -60,6 +63,10 @@ public class UserServlet extends HttpServlet {
                     String value=q.getParameter(name);if(value!=null)values.put(name,value);
                 }
                 JSONObject result=dao.mutate(actorId,String.valueOf(actor.get("authVersion")),action,values);
+                // 用户维护写操作接入操作日志：只记动作与结果，不记密码或哈希。
+                String targetId=String.valueOf(result.optLong("id",actorId));
+                String targetName=values.getOrDefault("username","");
+                OperationLogger.success(actor,"用户管理",userActionName(action),targetId,targetName,userSummary(action,values));
                 reply(p,200,"保存成功",result);return;
             }
             UserManagementDao.Query query=new UserManagementDao.Query(param(q,"keyword",""),param(q,"role_id",""),param(q,"status",""),param(q,"sort","created_at"),param(q,"dir","desc"),param(q,"page","1"),param(q,"size","10"));
@@ -73,9 +80,38 @@ public class UserServlet extends HttpServlet {
                 case "export":export(p,dao.all(query));break;
                 default:throw new UserProblem(400,"未实现的操作");
             }
-        } catch(UserProblem e){reply(p,e.status,e.getMessage(),null);}
+        } catch(UserProblem e){
+            if(e.status==403)OperationLogger.denied(actor,"用户管理",logAction,"",e.getMessage());
+            else OperationLogger.failed(actor,"用户管理",logAction,"","validation_failed",e.getMessage());
+            reply(p,e.status,e.getMessage(),null);}
         catch(SQLIntegrityConstraintViolationException e){reply(p,409,"账号已存在或关联约束冲突",null);}
-        catch(SQLException|JSONException e){log("用户管理执行失败",e);reply(p,500,"操作失败，请检查后台日志和09升级脚本",null);}
+        catch(SQLException|JSONException e){log("用户管理执行失败",e);OperationLogger.failed(actor,"用户管理",logAction,"","db_error","数据库异常");reply(p,500,"操作失败，请检查后台日志和09升级脚本",null);}
+    }
+    /** 写操作对应的日志动作名。 */
+    static String userActionName(String action){
+        switch(action){
+            case "create":return "新建账号";
+            case "update":return "编辑账号";
+            case "set_status":return "变更账号状态";
+            case "delete":return "删除账号";
+            case "reset_password":return "重置密码";
+            default:return "维护账号";
+        }
+    }
+    /** 变更摘要：只写关键非敏感字段，密码重置只记“发生过”。 */
+    static String userSummary(String action,Map<String,String> values){
+        if("reset_password".equals(action))return "密码已重置（不记录新旧密码或哈希）";
+        if("set_status".equals(action))return "状态改为："+statusName(values.getOrDefault("status",""));
+        if("update".equals(action)||"create".equals(action)){
+            StringBuilder text=new StringBuilder();
+            if(values.get("role_id")!=null)text.append("角色=").append(roleName(values.get("role_id")));
+            if(values.get("status")!=null){
+                if(text.length()>0)text.append("；");
+                text.append("状态=").append(statusName(values.get("status")));
+            }
+            return text.length()==0?"账号信息已保存":text.toString();
+        }
+        return values.getOrDefault("username","");
     }
     static String param(HttpServletRequest q,String key,String fallback){String v=q.getParameter(key);return v==null?fallback:v.trim();}
     private void export(HttpServletResponse p,JSONArray items)throws IOException,JSONException {

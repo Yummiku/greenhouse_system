@@ -433,6 +433,62 @@ public class PersonalMessageDao {
         return condition;
     }
 
+    /**
+     * 发件统计：当前筛选条件下的总数、草稿、已发送、已撤回及类型分布。
+     * 统计不使用状态筛选，避免只显示某一状态时把分布算错。
+     */
+    public org.json.JSONObject statsOutbox(int senderId, boolean onlyMine, MessageQuery query)
+            throws SQLException, org.json.JSONException {
+
+        Condition condition = new Condition();
+        condition.add(" WHERE 1=1");
+        if (onlyMine) {
+            condition.add(" AND sender_id = ?", senderId);
+        }
+        appendCommonFilters(condition, query);
+
+        Db db = new Db(DB_NAME);
+        try {
+            Connection connection = db.getConnection();
+            org.json.JSONObject data = new org.json.JSONObject();
+            String sql = "SELECT COUNT(*) AS total,"
+                    + " SUM(CASE WHEN send_status='draft' AND withdrawn_at IS NULL THEN 1 ELSE 0 END) AS draft,"
+                    + " SUM(CASE WHEN send_status='sent' AND withdrawn_at IS NULL THEN 1 ELSE 0 END) AS sent,"
+                    + " SUM(CASE WHEN withdrawn_at IS NOT NULL THEN 1 ELSE 0 END) AS withdrawn"
+                    + " FROM personal_message" + condition.sql;
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                bind(statement, condition.params);
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        data.put("total", rs.getLong("total"));
+                        data.put("draft", rs.getLong("draft"));
+                        data.put("sent", rs.getLong("sent"));
+                        data.put("withdrawn", rs.getLong("withdrawn"));
+                    }
+                }
+            }
+
+            org.json.JSONArray byType = new org.json.JSONArray();
+            String typeSql = "SELECT message_type, COUNT(*) AS c FROM personal_message"
+                    + condition.sql + " GROUP BY message_type ORDER BY c DESC";
+            try (PreparedStatement statement = connection.prepareStatement(typeSql)) {
+                bind(statement, condition.params);
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        String type = rs.getString("message_type");
+                        byType.put(new org.json.JSONObject()
+                                .put("type", type == null || type.isBlank() ? "未分类" : type)
+                                .put("count", rs.getLong("c")));
+                    }
+                }
+            }
+            data.put("byType", byType);
+            return data;
+        } finally {
+            db.close();
+        }
+    }
+
     private Condition outboxCondition(int senderId, boolean onlyMine, MessageQuery query) {
         Condition condition = new Condition();
         condition.add(" WHERE withdrawn_at IS NULL");

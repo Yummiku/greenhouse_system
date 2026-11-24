@@ -1,5 +1,6 @@
 package greenhouse.message.servlet;
 
+import greenhouse.log.service.OperationLogger;
 import greenhouse.message.dao.PersonalMessageDao;
 import greenhouse.message.entity.MessagePage;
 import greenhouse.message.entity.MessageQuery;
@@ -86,6 +87,10 @@ public class MessageServlet extends HttpServlet {
             }
             if ("stats".equals(action)) {
                 stats(request, response, userId);
+                return;
+            }
+            if ("statsOutbox".equals(action)) {
+                statsOutbox(request, response, userId, roleId);
                 return;
             }
             if ("exportInbox".equals(action)) {
@@ -327,6 +332,28 @@ public class MessageServlet extends HttpServlet {
         ok(response, data);
     }
 
+    /** 发件统计：总数/草稿/已发送/已撤回 + 类型分布，范围与发件列表一致。 */
+    private void statsOutbox(HttpServletRequest request, HttpServletResponse response,
+                             int userId, String roleId)
+            throws IOException, SQLException, JSONException {
+
+        if (ROLE_USER.equals(roleId)) {
+            reject(response, 403, "您没有权限查看发件记录");
+            return;
+        }
+        MessageQuery query = parseQuery(request, response);
+        if (query == null) {
+            return;
+        }
+        // 统计不使用状态筛选，否则单独筛某个状态时分布与总数会被口径截断。
+        query.setSendStatus("");
+        boolean onlyMine = ROLE_MANAGER.equals(roleId);
+        JSONObject data = messageDao.statsOutbox(userId, onlyMine, query);
+        data.put("roleId", Integer.parseInt(roleId));
+        data.put("onlyMine", onlyMine);
+        ok(response, data);
+    }
+
     // ==================== POST 写入 ====================
 
     /**
@@ -389,6 +416,9 @@ public class MessageServlet extends HttpServlet {
         }
 
         long id = messageDao.createDraft(senderId, recipientId, title, content, messageType);
+        // 业务已提交，再记一条成功操作日志（日志故障不影响业务）。
+        OperationLogger.success(currentUser(request), "个人消息", "新建草稿",
+                String.valueOf(id), title, "接收人ID=" + recipientId);
 
         JSONObject data = new JSONObject();
         data.put("id", id);
@@ -463,6 +493,8 @@ public class MessageServlet extends HttpServlet {
         }
 
         messageDao.updateDraft(id, userId, title, content, messageType, recipientId);
+        OperationLogger.success(currentUser(request), "个人消息", "编辑草稿",
+                String.valueOf(id), title, "接收人ID=" + recipientId);
 
         JSONObject data = new JSONObject();
         data.put("id", id);
@@ -489,6 +521,8 @@ public class MessageServlet extends HttpServlet {
             return;
         }
         if (!messageBelongsTo(message, userId, roleId)) {
+            OperationLogger.denied(currentUser(request), "个人消息", "发送消息",
+                    String.valueOf(id), "非本人草稿不可发送");
             reject(response, 403, "只能发送本人创建的消息");
             return;
         }
@@ -515,6 +549,8 @@ public class MessageServlet extends HttpServlet {
         data.put("id", id);
         data.put("sendStatus", STATUS_SENT);
         ok(response, data);
+        OperationLogger.success(currentUser(request), "个人消息", "发送消息",
+                String.valueOf(id), message.getTitle(), "接收人ID=" + message.getRecipientId());
     }
 
     private void markRead(HttpServletRequest request, HttpServletResponse response,
@@ -596,6 +632,8 @@ public class MessageServlet extends HttpServlet {
         }
 
         messageDao.deleteForRecipient(id, userId);
+        OperationLogger.success(currentUser(request), "个人消息", "删除收件",
+                String.valueOf(id), message.getTitle(), "接收人逻辑删除，仅影响本人可见");
 
         JSONObject data = new JSONObject();
         data.put("id", id);
@@ -631,6 +669,8 @@ public class MessageServlet extends HttpServlet {
         }
 
         messageDao.withdraw(id, userId, ROLE_ADMIN.equals(roleId));
+        OperationLogger.success(currentUser(request), "个人消息", "撤回消息",
+                String.valueOf(id), message.getTitle(), "状态 sent -> withdrawn");
 
         JSONObject data = new JSONObject();
         data.put("id", id);
@@ -663,6 +703,8 @@ public class MessageServlet extends HttpServlet {
         }
 
         messageDao.deleteDraft(id, userId);
+        OperationLogger.success(currentUser(request), "个人消息", "删除草稿",
+                String.valueOf(id), message.getTitle(), "草稿物理删除");
 
         JSONObject data = new JSONObject();
         data.put("id", id);

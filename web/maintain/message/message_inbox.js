@@ -17,6 +17,8 @@
     var statUnread = document.getElementById("stat_unread");
     var statRead = document.getElementById("stat_read");
     var statTypes = document.getElementById("stat_types");
+    var statTypeCount = document.getElementById("stat_type_count");
+    var typeChart = document.getElementById("inbox_type_chart");
 
     var keywordInput = document.getElementById("filter_keyword");
     var typeSelect = document.getElementById("filter_type");
@@ -251,16 +253,40 @@
             statRead.textContent = data.read == null ? 0 : data.read;
 
             var byType = data.byType || [];
-            statTypes.textContent = byType.length === 0
-                    ? "无数据"
-                    : byType.map(function (item) {
-                        return typeLabel(item.type) + " " + item.count;
-                    }).join("，");
+            if (statTypeCount) {
+                statTypeCount.textContent = byType.length === 0 ? 0 : byType.length;
+            }
+            if (typeChart) {
+                if (byType.length === 0) {
+                    typeChart.innerHTML = "<p class=\"muted\">当前条件下暂无数据</p>";
+                } else {
+                    var max = 1;
+                    byType.forEach(function (item) {
+                        max = Math.max(max, Number(item.count || 0));
+                    });
+                    typeChart.innerHTML = byType.map(function (item) {
+                        var width = Math.round(Number(item.count || 0) * 100 / max);
+                        return "<div class=\"log-bar-wrap\">"
+                                + "<div class=\"muted\">" + typeLabel(item.type)
+                                + "　" + item.count + " 条</div>"
+                                + "<div class=\"log-bar\"><span style=\"width:" + width + "%\"></span></div>"
+                                + "</div>";
+                    }).join("");
+                }
+            }
+            if (statTypes) {
+                statTypes.textContent = byType.length === 0
+                        ? "无数据"
+                        : byType.map(function (item) {
+                            return typeLabel(item.type) + " " + item.count;
+                        }).join("，");
+            }
         } catch (error) {
             statTotal.textContent = "—";
             statUnread.textContent = "—";
             statRead.textContent = "—";
-            statTypes.textContent = error.status === 401 ? "登录已失效" : "统计加载失败";
+            if (statTypeCount) statTypeCount.textContent = "—";
+            if (typeChart) typeChart.innerHTML = "<p class=\"muted\">统计加载失败</p>";
         }
     }
 

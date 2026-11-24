@@ -13,6 +13,13 @@
   <title>农业大棚系统 - 个人消息</title>
 
   <%@ include file="/home/frame/frame_style.jsp" %>
+
+  <style>
+    .log-bar { background: #e9f5ee; height: 18px; border-radius: 3px; overflow: hidden; }
+    .log-bar > span { display: block; height: 100%; background: #2f8f5b; }
+    .log-bar-wrap { margin-bottom: 8px; font-size: 12px; }
+    .log-chart { padding: 6px 0 2px; }
+  </style>
 </head>
 
 <body class="page-header-fixed page-quick-sidebar-over-content">
@@ -58,9 +65,24 @@
         <div class="col-md-3">
           <div class="portlet light bordered">
             <div class="portlet-body">
-              <div class="muted">类型分布</div>
-              <div class="bold" id="stat_types">—</div>
+              <div class="muted">涉及消息类型数</div>
+              <div class="bold font-lg" id="stat_type_count">—</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="portlet light bordered">
+        <div class="portlet-title">
+          <div class="caption">
+            <i class="icon-bar-chart"></i>
+            <span class="caption-subject bold">类型分布</span>
+            <span class="caption-helper">按当前筛选条件统计</span>
+          </div>
+        </div>
+        <div class="portlet-body">
+          <div id="inbox_type_chart" class="log-chart">
+            <p class="muted">加载中…</p>
           </div>
         </div>
       </div>
@@ -163,9 +185,9 @@
             <span class="caption-subject bold">我的收件箱</span>
           </div>
           <div class="actions">
-            <button type="button" id="message_export" class="btn green btn-sm">导出CSV</button>
+            <button type="button" id="message_export" class="btn default btn-sm">导出CSV</button>
             <button type="button" id="message_print" class="btn default btn-sm">打印</button>
-            <button type="button" id="message_refresh" class="btn blue btn-sm">刷新</button>
+            <button type="button" id="message_refresh" class="btn default btn-sm">刷新</button>
           </div>
         </div>
 
