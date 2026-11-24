@@ -85,6 +85,8 @@ public class EnvironmentServlet extends HttpServlet {
                 case "latest" -> reply(p, 200, "成功", latest(c, dao, q));
                 case "stats" -> reply(p, 200, "成功", stats(c, dao, q));
                 case "trend" -> reply(p, 200, "成功", trend(c, dao, q));
+                // 第13周：个人驾驶舱与移动端只读数据源，口径固定为「一个大棚 + 一个指标 + 时间范围」。
+                case "dashboard" -> reply(p, 200, "成功", dashboard(c, dao, q));
                 case "report" -> reply(p, 200, "成功", report(c, dao, q));
                 case "export" -> export(c, dao, q, p);
                 case "create" -> reply(p, 200, "保存成功", create(c, dao, q, user));
@@ -208,6 +210,79 @@ public class EnvironmentServlet extends HttpServlet {
                 .put("label", metric.label())
                 .put("unit", metric.unit())
                 .put("points", dao.trend(c, filter, points));
+    }
+
+    /**
+     * 第13周 个人驾驶舱数据（唐昕煜）。
+     *
+     * <p>口径：所选大棚 + 单一指标 + 最近 days 个自然日（默认 7 天，含今天，起日 00:00 到结束日次日 00:00 之前）。
+     * 数量/均值/最小/最大按采样时间 sample_time 统计，不同指标单位不混算；另附来源构成、趋势点与最新一条采样。
+     * 该接口沿用登录会话，普通用户也能读本模块可见范围，不另外开放无鉴权汇总接口。
+     */
+    private JSONObject dashboard(Connection c, EnvironmentDao dao, HttpServletRequest q)
+            throws SQLException, JSONException {
+        long greenhouseId = longParam(q, "greenhouse_id", "大棚");
+        JSONObject greenhouse = dao.greenhouse(c, greenhouseId);
+        if (greenhouse == null) throw new IllegalArgumentException("大棚不存在或已删除");
+        MetricType metric = MetricType.find(param(q, "metric_type", "air_temperature"))
+                .orElseThrow(() -> new IllegalArgumentException("指标无效"));
+        int days = intParam(q, "days", 7, 1, 90, "统计天数");
+
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.toLocalDate().minusDays(days - 1L).atStartOfDay();
+        EnvironmentDao.Filter filter = new EnvironmentDao.Filter()
+                .greenhouseId(greenhouseId)
+                .metricType(metric.code())
+                .from(Timestamp.valueOf(start))
+                .to(Timestamp.valueOf(end));
+
+        JSONArray summary = dao.summary(c, filter);
+        JSONObject row = summary.length() == 0 ? null : summary.getJSONObject(0);
+        JSONArray trend = dao.trend(c, filter, 120);
+
+        JSONObject latest = null;
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        JSONArray cards = dao.latest(c, greenhouseId, null);
+        for (int i = 0; i < cards.length(); i++) {
+            JSONObject card = cards.getJSONObject(i);
+            if (!metric.code().equals(card.optString("metric_type", ""))) continue;
+            latest = card;
+            if (card.getBoolean("has_data")) {
+                JSONObject sample = card.getJSONObject("sample");
+                Timestamp sampleTime = EnvironmentDao.parseTime(sample.getString("sample_time"), "采样时间");
+                long age = sampleTime == null ? -1
+                        : Math.max(0, (now.getTime() - sampleTime.getTime()) / 1000);
+                card.put("age_seconds", age);
+                card.put("stale", age < 0 || age > 10);
+            }
+            break;
+        }
+
+        JSONObject data = new JSONObject()
+                .put("greenhouse_id", greenhouseId)
+                .put("greenhouse_code", greenhouse.optString("greenhouse_code", ""))
+                .put("greenhouse_name", greenhouse.optString("name", ""))
+                .put("greenhouse_status", greenhouse.optString("status", ""))
+                .put("metric_type", metric.code())
+                .put("metric_label", metric.label())
+                .put("unit", metric.unit())
+                .put("days", days)
+                .put("from", start.format(TIME))
+                .put("to", end.format(TIME))
+                .put("empty", row == null)
+                .put("sources", dao.sourceBreakdown(c, filter))
+                .put("trend", trend)
+                .put("latest", latest == null ? JSONObject.NULL : latest)
+                .put("server_time", LocalDateTime.now().format(TIME));
+        if (row != null) {
+            data.put("total", row.get("total"))
+                    .put("avg_value", row.get("avg_value"))
+                    .put("min_value", row.get("min_value"))
+                    .put("max_value", row.get("max_value"))
+                    .put("first_time", row.get("first_time"))
+                    .put("last_time", row.get("last_time"));
+        }
+        return data;
     }
 
     private JSONObject report(Connection c, EnvironmentDao dao, HttpServletRequest q)
