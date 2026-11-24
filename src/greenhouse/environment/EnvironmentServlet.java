@@ -243,8 +243,7 @@ public class EnvironmentServlet extends HttpServlet {
                 .orElseThrow(() -> new IllegalArgumentException("指标无效"));
         BigDecimal value = value(c, dao, greenhouseId, devicePk, metric, q);
         Timestamp sampleTime = sampleTime(required(q, "sample_time", "采样时间"));
-        String remark = param(q, "remark", "");
-        if (remark.length() > 255) throw new IllegalArgumentException("备注不能超过255字");
+        // 备注字段没有真实保存与展示能力，第13周从表单与接口参数中去掉，避免用户填了丢失。
 
         String sampleKey = "manual:" + greenhouseId + ":" + metric.code() + ":"
                 + sampleTime.toLocalDateTime()
@@ -295,7 +294,9 @@ public class EnvironmentServlet extends HttpServlet {
     private JSONObject delete(Connection c, EnvironmentDao dao, HttpServletRequest q, Map<?, ?> user)
             throws SQLException, JSONException {
         long id = longParam(q, "id", "记录ID");
-        String reason = required(q, "reason", "删除原因");
+        // 第13周：删除改为浏览器原生确认框，原因可以不填；字段保留以兼容历史审计数据。
+        // 后台仍然只允许删除 source=manual 的记录，并且只做逻辑删除。
+        String reason = param(q, "reason", "");
         if (reason.length() > 255) throw new IllegalArgumentException("删除原因不能超过255字");
         JSONObject sample = dao.detail(c, id);
         if (sample == null) throw new IllegalArgumentException("记录不存在或已删除");
