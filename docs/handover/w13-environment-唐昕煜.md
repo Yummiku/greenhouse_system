@@ -66,13 +66,18 @@
 | 项目 | 状态 | 证据 |
 | --- | --- | --- |
 | `environment.js` / `dashboard.js` 语法 | 通过 | Node `vm.Script` 编译通过 |
-| Java 结构自检（括号/引号平衡） | 通过 | 仅结构检查，**不是编译** |
+| Java 结构自检（括号/引号平衡） | 通过 | 结构检查；编译结果见下一行 |
 | C++ 结构自检（括号/引号平衡） | 通过 | **未编译、未运行** |
-| 全量 `javac` 编译 | **未执行** | 本机没有可写的编译输出目录（沙箱限制），无法编译 |
+| 环境模块 `javac` 编译 | **通过** | JDK 17.0.20 + servlet-api(6.0) + `web/WEB-INF/lib/json.jar` + mysql-connector 8.0.33，编译 `environment` 五个类 + `device.dao.Db` + `greenhouse.config.LocalSettings`，`javac exit 0` |
+| 全项目 `javac` 编译 | **未执行** | 只验证了本模块与其直接依赖，其它成员模块未一起编译 |
 | Tomcat 启动与页面点击 | **未执行** | 本机未启动 Tomcat/MySQL |
 | SQL 21/22 执行 | **未执行** | 未连接任何数据库 |
 | Qt 真实上传联调 | **未执行** | 未配置 Qt 6 构建环境 |
 | 指导书第九节 20 项自测 | **全部未执行** | 需成员本机按清单逐项跑 |
+
+编译过程中实际发现并修复了一个缺陷（提交 `f67d3ef`）：`EnvironmentIngestServlet$Batch.toJson()`
+没有声明 `throws JSONException`，而本项目的 org.json 版本 `JSONObject.put` 会抛受检异常，导致编译不通过。
+修好后 `javac exit 0`。这说明“结构自检通过”不等于“能编译”，编译仍然必须做。
 
 ### 指导书 20 项自测的当前状态
 
