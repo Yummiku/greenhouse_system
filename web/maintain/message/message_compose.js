@@ -21,6 +21,13 @@
     var printButton = document.getElementById("message_outbox_print");
     var newDraftButton = document.getElementById("message_new_draft");
     var modalTitle = document.getElementById("message_modal_title");
+    var searchButton = document.getElementById("outbox_search");
+    var resetButton = document.getElementById("outbox_reset");
+    var statTotal = document.getElementById("outbox_stat_total");
+    var statDraft = document.getElementById("outbox_stat_draft");
+    var statSent = document.getElementById("outbox_stat_sent");
+    var statWithdrawn = document.getElementById("outbox_stat_withdrawn");
+    var typeChart = document.getElementById("outbox_type_chart");
 
     // 角色3页面上不渲染表单，直接结束。
     if (!saveButton || !outboxBody) return;
@@ -181,6 +188,47 @@
                 : "第 " + page + " / " + Math.max(pages, 1) + " 页，共 " + total + " 条";
         if (prevButton) prevButton.disabled = loading || page <= 1;
         if (nextButton) nextButton.disabled = loading || page >= pages;
+    }
+
+    async function loadOutboxStats() {
+        if (!statTotal || !window.GHApi) return;
+        try {
+            var result = await window.GHApi.get("/api/messages", {
+                action: "statsOutbox",
+                sendStatus: "",
+                sortBy: "createdAt",
+                sortDir: "desc"
+            });
+            var data = result.data || {};
+            statTotal.textContent = data.total == null ? "—" : data.total;
+            statDraft.textContent = data.draft == null ? "—" : data.draft;
+            statSent.textContent = data.sent == null ? "—" : data.sent;
+            statWithdrawn.textContent = data.withdrawn == null ? "—" : data.withdrawn;
+
+            if (!typeChart) return;
+            var byType = data.byType || [];
+            if (!byType.length) {
+                typeChart.innerHTML = "<p class=\"muted\">当前条件下暂无数据</p>";
+                return;
+            }
+            var max = 1;
+            byType.forEach(function (item) {
+                max = Math.max(max, Number(item.count || 0));
+            });
+            typeChart.innerHTML = byType.map(function (item) {
+                var width = Math.round(Number(item.count || 0) * 100 / max);
+                return "<div class=\"log-bar-wrap\">"
+                        + "<div class=\"muted\">" + typeLabel(item.type)
+                        + "　" + item.count + " 条</div>"
+                        + "<div class=\"log-bar\"><span style=\"width:" + width + "%\"></span></div>"
+                        + "</div>";
+            }).join("");
+        } catch (error) {
+            if (typeChart) {
+                typeChart.innerHTML = "<p class=\"muted\">统计加载失败："
+                        + (error.status === 403 ? "您没有权限查看发件记录" : error.message) + "</p>";
+            }
+        }
     }
 
     async function loadOutbox() {
@@ -423,7 +471,28 @@
     refreshButton.addEventListener("click", function () {
         currentPage = 1;
         loadOutbox();
+        loadOutboxStats();
     });
+
+    if (searchButton) {
+        searchButton.addEventListener("click", function () {
+            currentPage = 1;
+            loadOutbox();
+            loadOutboxStats();
+        });
+    }
+
+    if (resetButton) {
+        resetButton.addEventListener("click", function () {
+            if (statusSelect) statusSelect.value = "";
+            if (sortSelect) sortSelect.value = "createdAt";
+            if (dirSelect) dirSelect.value = "desc";
+            if (pageSizeSelect) pageSizeSelect.value = "10";
+            currentPage = 1;
+            loadOutbox();
+            loadOutboxStats();
+        });
+    }
 
     if (statusSelect) {
         statusSelect.addEventListener("change", function () {
@@ -460,4 +529,5 @@
     }
 
     loadOutbox();
+    loadOutboxStats();
 })();

@@ -19,6 +19,13 @@
   <title>农业大棚系统 - 消息发件</title>
 
   <%@ include file="/home/frame/frame_style.jsp" %>
+
+  <style>
+    .log-bar { background: #e9f5ee; height: 18px; border-radius: 3px; overflow: hidden; }
+    .log-bar > span { display: block; height: 100%; background: #2f8f5b; }
+    .log-bar-wrap { margin-bottom: 8px; font-size: 12px; }
+    .log-chart { padding: 6px 0 2px; }
+  </style>
 </head>
 
 <body class="page-header-fixed page-quick-sidebar-over-content">
@@ -42,6 +49,56 @@
       </div>
       <% } else { %>
 
+      <div class="row">
+        <div class="col-md-3">
+          <div class="portlet light bordered">
+            <div class="portlet-body">
+              <div class="muted">发件总数</div>
+              <div class="bold font-lg" id="outbox_stat_total">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="portlet light bordered">
+            <div class="portlet-body">
+              <div class="muted">草稿</div>
+              <div class="bold font-lg" id="outbox_stat_draft">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="portlet light bordered">
+            <div class="portlet-body">
+              <div class="muted">已发送</div>
+              <div class="bold font-lg" id="outbox_stat_sent">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="portlet light bordered">
+            <div class="portlet-body">
+              <div class="muted">已撤回</div>
+              <div class="bold font-lg" id="outbox_stat_withdrawn">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="portlet light bordered">
+        <div class="portlet-title">
+          <div class="caption">
+            <i class="icon-bar-chart"></i>
+            <span class="caption-subject bold">发件类型分布</span>
+            <span class="caption-helper" id="outbox_dist_note">按当前筛选范围统计</span>
+          </div>
+        </div>
+        <div class="portlet-body">
+          <div id="outbox_type_chart" class="log-chart">
+            <p class="muted">加载中…</p>
+          </div>
+        </div>
+      </div>
+
       <div class="portlet light bordered">
         <div class="portlet-title">
           <div class="caption">
@@ -50,7 +107,7 @@
           </div>
           <div class="actions">
             <button type="button" id="message_new_draft" class="btn blue btn-sm">新建消息</button>
-            <button type="button" id="message_outbox_export" class="btn green btn-sm">导出CSV</button>
+            <button type="button" id="message_outbox_export" class="btn default btn-sm">导出CSV</button>
             <button type="button" id="message_outbox_print" class="btn default btn-sm">打印</button>
             <button type="button" id="message_outbox_refresh" class="btn default btn-sm">刷新</button>
           </div>
@@ -88,6 +145,13 @@
                 <option value="20">20</option>
                 <option value="50">50</option>
               </select>
+            </div>
+            <div class="col-md-2">
+              <label>&nbsp;</label>
+              <div>
+                <button type="button" id="outbox_search" class="btn blue btn-sm">查询</button>
+                <button type="button" id="outbox_reset" class="btn default btn-sm">重置</button>
+              </div>
             </div>
           </div>
 

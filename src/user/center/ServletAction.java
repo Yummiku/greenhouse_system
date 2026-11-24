@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import user.dao.UserDao;
+import greenhouse.log.service.LoginLogService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -30,6 +31,8 @@ public class ServletAction extends HttpServlet {
         if (username == null || password == null
                 || username.trim().isEmpty() || password.isEmpty()) {
 
+            // 一次登录尝试一条失败日志：输入不完整，不记录密码字段。
+            LoginLogService.failure(request, "", LoginLogService.REASON_INVALID_INPUT);
             response.sendRedirect(
                     request.getContextPath()
                             + "/home/main/login.jsp?error=1"
@@ -46,7 +49,9 @@ public class ServletAction extends HttpServlet {
                     userDao.login(username, password);
 
             if (user == null) {
-                // 账号或密码错误，返回登录页
+                // 账号或密码错误，返回登录页；日志只记失败类别，前端提示保持统一。
+                LoginLogService.failure(request, username,
+                        LoginLogService.classifyFailure(username));
                 response.sendRedirect(
                         request.getContextPath()
                                 + "/home/main/login.jsp?error=1"
@@ -60,6 +65,9 @@ public class ServletAction extends HttpServlet {
             session.setAttribute("loginUser", user);
             session.removeAttribute("userCsrfToken");
 
+            // 成功登录关联真实用户ID；日志写入失败不影响登录结果。
+            LoginLogService.success(request, user);
+
             // 跳转到系统首页
             response.sendRedirect(
                     request.getContextPath()
@@ -67,6 +75,7 @@ public class ServletAction extends HttpServlet {
             );
 
         } catch (SQLException e) {
+            LoginLogService.failure(request, username, LoginLogService.REASON_SERVICE);
             throw new ServletException("登录查询失败，请检查数据库配置", e);
         }
     }
