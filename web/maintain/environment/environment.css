@@ -212,3 +212,23 @@ dialog.env-dialog::backdrop {
         background: none;
     }
 }
+
+/* 第13周：详情里的技术信息折叠块与分页区，沿用公共配色，不新增主题。 */
+.env-tech {
+    margin: 12px 0;
+    padding: 8px 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    background: #fafafa;
+}
+
+.env-tech summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.env-pager {
+    align-items: center;
+    gap: 12px;
+}

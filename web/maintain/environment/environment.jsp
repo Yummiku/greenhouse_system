@@ -24,15 +24,32 @@
 
       <p id="env-message" role="status" aria-live="polite">正在加载环境数据……</p>
 
+      <!-- 统计区：位置在页面标题之后、查询与维护之前；默认显示，随已执行查询和成功维护同步更新。 -->
+      <section class="portlet light bordered" aria-labelledby="env-stat-title">
+        <div class="portlet-title">
+          <div class="caption">
+            <i class="icon-graph"></i>
+            <span class="caption-subject bold" id="env-stat-title">采样统计与趋势</span>
+            <span class="caption-helper">按当前已执行的查询条件统计，不同单位不混算</span>
+          </div>
+        </div>
+        <div class="portlet-body">
+          <div id="env-stat-cards" class="env-cards"></div>
+          <p id="env-stat-scope" class="env-note">统计范围：当前查询条件（首次进入为默认条件）。</p>
+          <div id="env-chart" class="env-chart"></div>
+        </div>
+      </section>
+
+      <!-- 实时区：独立标明所选大棚，与上面的历史统计区分开。 -->
       <section class="portlet light bordered" aria-labelledby="env-live-title">
         <div class="portlet-title">
           <div class="caption">
             <i class="icon-bar-chart"></i>
-            <span class="caption-subject bold" id="env-live-title">大棚环境监测</span>
-            <span class="caption-helper">五类指标最新值与历史采样</span>
+            <span class="caption-subject bold" id="env-live-title">大棚实时环境</span>
+            <span class="caption-helper">仅显示所选大棚各指标的最新值，不是全部大棚汇总</span>
           </div>
           <div class="actions">
-            <label class="env-inline" for="env-live-greenhouse">大棚
+            <label class="env-inline" for="env-live-greenhouse">监测大棚
               <select id="env-live-greenhouse" class="form-control"></select>
             </label>
             <button type="button" id="env-refresh" class="btn default btn-sm">立即刷新</button>
@@ -41,8 +58,8 @@
         <div class="portlet-body">
           <div id="env-cards" class="env-cards"></div>
           <p class="env-note">
-            空气温度与土壤湿度每 2 秒读取一次最新接口，轮询不会重叠；超过 10 秒未更新标记为过期。
-            0 是有效数值，与「无数据」「读取失败」「过期」分别显示。数据来源分实采、模拟、人工三类，不混用。
+            每 2 秒读取一次最新接口，轮询不会重叠；超过 10 秒未更新标记为过期，过期表示数据没有更新，不等于传感器故障。
+            0 是有效数值，与「无数据」「读取失败」「过期」分别显示。
           </p>
         </div>
       </section>
@@ -64,7 +81,7 @@
             </label>
             <label>来源
               <select class="form-control" name="source">
-                <option value="">全部来源</option>
+                <option value="">全部</option>
                 <option value="real">实采</option>
                 <option value="simulated">模拟</option>
                 <option value="manual">人工</option>
@@ -79,9 +96,9 @@
             <label>排序
               <select class="form-control" name="sort">
                 <option value="sample_time">采样时间</option>
-                <option value="value">数值</option>
                 <option value="received_at">接收时间</option>
-                <option value="id">记录ID</option>
+                <option value="value">数值</option>
+                <option value="id">记录编号</option>
               </select>
             </label>
             <label>顺序
@@ -99,20 +116,19 @@
           </form>
 
           <div class="env-actions">
-            <button class="btn blue" type="button" id="env-add">新增人工测试记录</button>
-            <button class="btn default" type="button" id="env-stats">统计与趋势</button>
-            <button class="btn default" type="button" id="env-export">导出全部筛选结果（CSV）</button>
-            <button class="btn default" type="button" id="env-print">打印曲线与数据表</button>
+            <button class="btn blue" type="button" id="env-add">新增记录</button>
+            <button class="btn default" type="button" id="env-export">导出CSV</button>
+            <button class="btn default" type="button" id="env-print">打印报表</button>
+            <button class="btn default" type="button" id="env-list-refresh">刷新</button>
           </div>
 
           <p id="env-summary"></p>
-          <div id="env-chart" class="env-chart" hidden></div>
 
           <div class="table-responsive">
             <table class="table table-bordered">
               <thead>
               <tr>
-                <th>采样键</th>
+                <th>记录编号</th>
                 <th>大棚</th>
                 <th>设备</th>
                 <th>指标</th>
@@ -127,7 +143,14 @@
             </table>
           </div>
 
-          <div class="env-actions">
+          <div class="env-actions env-pager">
+            <label class="env-inline" for="env-page-size">每页
+              <select id="env-page-size" class="form-control">
+                <option value="10" selected>10 条</option>
+                <option value="20">20 条</option>
+                <option value="50">50 条</option>
+              </select>
+            </label>
             <button id="env-prev" type="button" class="btn default">上一页</button>
             <span id="env-pages"></span>
             <button id="env-next" type="button" class="btn default">下一页</button>
@@ -141,9 +164,10 @@
 <%@ include file="/home/frame/frame_footer.jsp" %>
 
 <dialog id="env-editor" class="env-dialog">
-  <h3 id="env-editor-title">新增人工测试采样</h3>
+  <h3 id="env-editor-title">新增采样记录</h3>
   <form id="env-form">
     <input type="hidden" name="id">
+    <p id="env-editor-note" class="env-note">手工录入的数据会计为「人工」来源。</p>
     <div class="env-form-grid">
       <label>大棚
         <select class="form-control" name="greenhouse_id" required></select>
@@ -160,10 +184,7 @@
       <label>采样时间
         <input class="form-control" name="sample_time" type="datetime-local" step="1" required>
       </label>
-      <label>备注（新增时可用）
-        <input class="form-control" name="remark" maxlength="255">
-      </label>
-      <label>更正原因（更正时必填）
+      <label id="env-reason-field" hidden>修改原因
         <input class="form-control" name="reason" maxlength="255">
       </label>
     </div>
@@ -174,31 +195,24 @@
   </form>
 </dialog>
 
-<dialog id="env-delete" class="env-dialog">
-  <h3>逻辑删除人工记录</h3>
-  <form id="env-delete-form">
-    <p id="env-delete-target"></p>
-    <label>删除原因（必填）
-      <input class="form-control" name="reason" maxlength="255" required>
-    </label>
-    <p class="env-note">删除只对人的误录生效：实采与模拟记录不能删除，避免原始数据被抹除。</p>
-    <p id="env-delete-message" role="alert"></p>
-    <button id="env-delete-save" class="btn blue" type="submit">确认删除</button>
-    <button class="btn default" type="button" data-close="env-delete">取消</button>
-  </form>
-</dialog>
-
 <dialog id="env-detail" class="env-dialog">
-  <h3>采样详情</h3>
+  <h3>采样记录详情</h3>
   <dl id="env-detail-body" class="env-detail-list"></dl>
-  <h4>人工更正留痕</h4>
+  <details id="env-tech" class="env-tech" hidden>
+    <summary>技术信息</summary>
+    <p class="env-note">采样键由采集端生成，用于识别同一次采样、处理网络重试，日常定位记录请使用记录编号。</p>
+    <p><code id="env-detail-key" class="env-mono"></code>
+      <button id="env-copy-key" class="btn default btn-sm" type="button">复制</button>
+    </p>
+  </details>
+  <h4>修改记录</h4>
   <div class="table-responsive">
     <table class="table table-bordered">
       <thead>
       <tr>
-        <th>更正时间</th>
+        <th>修改时间</th>
         <th>操作人</th>
-        <th>原值 → 新值</th>
+        <th>修改前 → 修改后</th>
         <th>原采样时间 → 新采样时间</th>
         <th>原因</th>
       </tr>
