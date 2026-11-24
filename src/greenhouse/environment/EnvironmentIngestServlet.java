@@ -338,7 +338,7 @@ public class EnvironmentIngestServlet extends HttpServlet {
                     .put("reason", reason));
         }
 
-        JSONObject toJson() {
+        JSONObject toJson() throws JSONException {
             return new JSONObject()
                     .put("accepted", accepted)
                     .put("duplicated", duplicated)
