@@ -299,11 +299,15 @@ public final class EnvironmentDao {
         private final int devicePk;
         private final String metricType;
         private final String unit;
+        private final String deviceType;
+        private final String deviceCode;
 
-        Binding(int devicePk, String metricType, String unit) {
+        Binding(int devicePk, String metricType, String unit, String deviceType, String deviceCode) {
             this.devicePk = devicePk;
             this.metricType = metricType;
             this.unit = unit;
+            this.deviceType = deviceType;
+            this.deviceCode = deviceCode;
         }
 
         public int devicePk() {
@@ -317,17 +321,35 @@ public final class EnvironmentDao {
         public String unit() {
             return unit;
         }
+
+        public String deviceType() {
+            return deviceType;
+        }
+
+        public String deviceCode() {
+            return deviceCode;
+        }
+
+        /** 只有 sensor 才能作为采样来源；device_type 为空按 sensor 处理以兼容早期演示数据。 */
+        public boolean sensor() {
+            return deviceType == null || deviceType.isBlank() || "sensor".equalsIgnoreCase(deviceType);
+        }
     }
 
-    /** 设备必须已经在大棚设备关联表里登记，且指标与关联配置一致。 */
+    /**
+     * 设备必须已经在大棚设备关联表里登记，且指标与关联配置一致。
+     * 同时带出 device_type / device_code：上传入口要拒绝控制设备，提示里给业务编号而不是主键。
+     */
     public Binding binding(Connection c, long greenhouseId, int devicePk)
             throws SQLException, JSONException {
         JSONObject row = first(c,
-                "SELECT device_pk, metric_type, unit FROM greenhouse_device_binding "
-                + "WHERE device_pk = ? AND greenhouse_id = ?",
+                "SELECT b.device_pk, b.metric_type, b.unit, d.device_type, d.device_id AS device_code "
+                + "FROM greenhouse_device_binding b JOIN device_file d ON d.id = b.device_pk "
+                + "WHERE b.device_pk = ? AND b.greenhouse_id = ?",
                 List.of(devicePk, greenhouseId));
         if (row == null) return null;
-        return new Binding(row.getInt("device_pk"), row.getString("metric_type"), row.getString("unit"));
+        return new Binding(row.getInt("device_pk"), row.getString("metric_type"), row.getString("unit"),
+                row.optString("device_type", null), row.optString("device_code", null));
     }
 
     public JSONObject greenhouse(Connection c, long id) throws SQLException, JSONException {
