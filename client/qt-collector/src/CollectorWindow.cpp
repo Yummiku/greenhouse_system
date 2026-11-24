@@ -82,7 +82,7 @@ CollectorWindow::~CollectorWindow() = default;
 
 void CollectorWindow::buildUi()
 {
-    setWindowTitle(QStringLiteral("大棚环境数据采集客户端（模拟源）"));
+    setWindowTitle(QStringLiteral("大棚环境数据采集客户端"));
     resize(980, 760);
     setMinimumSize(840, 620);
 
@@ -116,6 +116,11 @@ void CollectorWindow::buildUi()
     m_metricsLabel = new QLabel(this);
     m_metricsLabel->setWordWrap(true);
     form->addRow(QStringLiteral("采集指标："), m_metricsLabel);
+
+    // 来源必须和地址、设备、指标一起显示：模拟采集不能看起来像真实采集。
+    m_sourceLabel = new QLabel(this);
+    m_sourceLabel->setWordWrap(true);
+    form->addRow(QStringLiteral("采集来源："), m_sourceLabel);
 
     configLayout->addLayout(form);
 
@@ -257,11 +262,12 @@ void CollectorWindow::loadConfiguration()
 
         m_configHintLabel->setText(
             QStringLiteral("<span style='color:#1b5e20;'>配置校验通过：device_pk=%1，"
-                           "greenhouse_id=%2，%3 类指标，每 %4 ms 上传一次，"
-                           "重试最多 %5 次。</span>")
+                           "greenhouse_id=%2，指标 %3，来源 %4，每 %5 ms 上传一次，"
+                           "重试最多 %6 次。</span>")
                 .arg(m_config.devicePk)
                 .arg(m_config.greenhouseId)
-                .arg(static_cast<int>(m_config.metrics.size()))
+                .arg(joinMetricNames(m_config.metrics))
+                .arg(m_config.source)
                 .arg(m_config.uploadIntervalMs)
                 .arg(m_config.retry.maxRetries));
 
@@ -311,6 +317,12 @@ void CollectorWindow::updateConfigSummary()
                                         : m_config.greenhouseCode));
 
     m_metricsLabel->setText(joinMetricNames(m_config.metrics));
+
+    const bool real = m_config.source == QStringLiteral("real");
+    const QString sourceText = real ? QStringLiteral("真实采集（real）")
+                                    : QStringLiteral("模拟采集（simulated）");
+    m_sourceLabel->setText(sourceText);
+    setWindowTitle(QStringLiteral("大棚环境数据采集客户端（") + sourceText + QStringLiteral("）"));
 }
 
 bool CollectorWindow::configurationReady() const

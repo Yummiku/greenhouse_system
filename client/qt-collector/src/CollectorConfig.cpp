@@ -132,6 +132,11 @@ ConfigLoadResult loadConfig(const QString& path)
     readStringField(root, QStringLiteral("base_url"), &config.baseUrl, &result.problems);
     readStringField(root, QStringLiteral("collector_key"), &config.collectorKey, &result.problems);
     readStringField(root, QStringLiteral("greenhouse_code"), &config.greenhouseCode, &result.problems);
+    readStringField(root, QStringLiteral("source"), &config.source, &result.problems);
+    if (config.source.isEmpty()) {
+        // 不写时按模拟采集处理：宁可把实采写成模拟，也不允许把模拟冒充实采。
+        config.source = QStringLiteral("simulated");
+    }
 
     qint64 devicePk = config.devicePk;
     readIntegerField(root, QStringLiteral("device_pk"), &devicePk, &result.problems);
@@ -145,11 +150,12 @@ ConfigLoadResult loadConfig(const QString& path)
     readIntegerField(root, QStringLiteral("upload_interval_ms"), &intervalMs, &result.problems);
     config.uploadIntervalMs = toIntSaturated(intervalMs);
 
-    // metrics 缺省时采集五类全部指标；出现未知指标直接判为配置错误，
-    // 避免界面看起来正常、实际却少传了某个指标。
+    // 第13周约定：一台已绑定采样设备只对应一个指标，metrics 必须显式写出这一个指标。
+    // 不再缺省为五类全部——那会把湿度样本发到温度设备上，服务端现在会逐条拒绝。
     const QJsonValue metricsValue = root.value(QStringLiteral("metrics"));
     if (metricsValue.isUndefined()) {
-        config.metrics = allMetricTypes();
+        result.problems.append(QStringLiteral(
+            "缺少 metrics：一台采样设备只对应一个绑定指标，请只写该设备绑定的那一个指标"));
     } else if (!metricsValue.isArray()) {
         result.problems.append(QStringLiteral("字段 metrics 必须是字符串数组"));
     } else {
@@ -219,6 +225,10 @@ QStringList validateConfig(const CollectorConfig& config)
             problems.append(QStringLiteral("base_url 必须是形如 http://127.0.0.1:8080 的绝对地址"));
         } else if (url.scheme() != QStringLiteral("http") && url.scheme() != QStringLiteral("https")) {
             problems.append(QStringLiteral("base_url 只支持 http 或 https"));
+        } else if (url.path().isEmpty() || url.path() == QStringLiteral("/")) {
+            // 本项目部署在 /greenhouse_system 上下文，只写到端口会请求到 /api/... 而 404。
+            problems.append(QStringLiteral(
+                "base_url 需要包含应用上下文，例如 http://localhost:9999/greenhouse_system"));
         }
     }
 
@@ -250,6 +260,13 @@ QStringList validateConfig(const CollectorConfig& config)
 
     if (config.metrics.isEmpty()) {
         problems.append(QStringLiteral("metrics 不能为空"));
+    } else if (config.metrics.size() > 1) {
+        problems.append(QStringLiteral(
+            "metrics 只能有一个指标：一台采样设备只对应一个绑定指标，五类指标请用五台设备分别采集"));
+    }
+
+    if (config.source != QStringLiteral("simulated") && config.source != QStringLiteral("real")) {
+        problems.append(QStringLiteral("source 只允许 simulated（模拟采集）或 real（真实采集）"));
     }
 
     if (config.uploadIntervalMs < 500 || config.uploadIntervalMs > 3600000) {

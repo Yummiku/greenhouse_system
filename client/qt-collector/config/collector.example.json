@@ -1,15 +1,12 @@
 {
-  "base_url": "http://127.0.0.1:8080",
+  "base_url": "http://127.0.0.1:9999/greenhouse_system",
   "collector_key": "REPLACE_WITH_REAL_COLLECTOR_KEY",
-  "greenhouse_id": 3,
-  "greenhouse_code": "GH-A-001",
-  "device_pk": 12,
+  "greenhouse_id": 1,
+  "greenhouse_code": "GH-DEMO-01",
+  "device_pk": 2,
+  "source": "simulated",
   "metrics": [
-    "air_temperature",
-    "air_humidity",
-    "soil_temperature",
-    "soil_moisture",
-    "illuminance"
+    "air_temperature"
   ],
   "upload_interval_ms": 2000,
   "retry": {

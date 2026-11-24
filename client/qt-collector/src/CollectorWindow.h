@@ -61,6 +61,7 @@ private:
     QLabel* m_serverLabel = nullptr;
     QLabel* m_deviceLabel = nullptr;
     QLabel* m_metricsLabel = nullptr;
+    QLabel* m_sourceLabel = nullptr;
     QLabel* m_configHintLabel = nullptr;
     QPushButton* m_reloadButton = nullptr;
     QPushButton* m_toggleButton = nullptr;

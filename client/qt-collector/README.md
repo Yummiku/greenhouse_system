@@ -1,14 +1,14 @@
 # w12-qt — 大棚环境数据采集上传客户端
 
 面向 Java Web 环境监测平台的**最小可用**桌面采集端（Qt 6 / C++17 / QtWidgets + QtNetwork）。
-一个采集端固定对应 **一个大棚 + 一个设备**，定时产生五类环境指标，按约定接口 `POST` 到服务端，
+一个采集端固定对应 **一个大棚 + 一个设备 + 该设备绑定的一个指标**，定时产生这**一个**指标的采样，按约定接口 `POST` 到服务端，
 并在界面上给出逐批结果、累计条数、连接状态和失败原因。
 
 > ## ⚠ 数据来源声明
 >
 > **本客户端的数据来源是“模拟源”，不是真实硬件采集。**
 > 所有数值都由 [`SampleGenerator`](src/SampleGenerator.cpp) 在本地用随机游走生成，
-> 上传 body 里的 `"source"` 固定为 `"simulated"`。
+> 上传 body 里的 `"source"` 由配置决定，默认 `"simulated"`；接入真实传感器后才改成 `"real"`。
 > 真实传感器（串口 / Modbus / 网关）接入尚未实现，代码中用 `TODO(真实硬件)` 标注。
 
 ---
@@ -16,8 +16,9 @@
 ## 功能
 
 - 定时上传（`QTimer`，间隔可配置，默认 2000 ms），可暂停 / 恢复，也可“立即上传一次”。
-- 一批最多 5 条采样：`air_temperature`、`air_humidity`、`soil_temperature`、
-  `soil_moisture`、`illuminance`，指标集合由配置决定。
+- **一台设备只采一个指标**（第13周三人约定）：`metrics` 必须恰好写设备绑定的那一个，
+  可选 `air_temperature`、`air_humidity`、`soil_temperature`、`soil_moisture`、`illuminance`；
+  五类指标要展示时，用五台分别绑定的设备各跑一个实例。
 - `sample_key` 由客户端保证唯一：`<greenhouse_code>:<metric_type>:<yyyyMMddHHmmss>`；
   同一批内同一指标不出现在同一秒，跨批次也不会重复；**重试时复用同一份 payload**，
   让服务端按唯一键去重。
@@ -117,12 +118,13 @@ notepad .\build\Release\collector.json        # 填入真实 base_url / collecto
 
 | 字段 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `base_url` | 是 | — | 服务端根地址，如 `http://127.0.0.1:8080`，只支持 http/https |
+| `base_url` | 是 | — | 服务端根地址**含应用上下文**，如 `http://127.0.0.1:9999/greenhouse_system`，只支持 http/https |
 | `collector_key` | 是 | — | 采集凭据，放进请求头 `X-Collector-Key`；**只从配置读取，不写死在代码里** |
 | `greenhouse_id` | 是 | — | 大棚主键，固定值，随每批上传 |
 | `greenhouse_code` | 是 | — | 大棚编码，`sample_key` 前缀；不能含冒号和空格 |
 | `device_pk` | 是 | — | 设备主键，固定值，随每批上传 |
-| `metrics` | 否 | 五类全部 | 采集指标数组；未知指标会导致配置校验失败 |
+| `source` | 否 | `simulated` | 数据来源：`simulated` 模拟采集 / `real` 真实采集 |
+| `metrics` | 是 | — | 只能有 **一个** 指标，必须等于该 `device_pk` 绑定的指标；多写或少写都会配置校验失败 |
 | `upload_interval_ms` | 否 | `2000` | 定时上传间隔（毫秒），范围 500~3600000 |
 | `retry.max_retries` | 否 | `3` | 首次失败后的最大重试次数，范围 0~10 |
 | `retry.initial_delay_ms` | 否 | `1000` | 首次重试延迟，之后按倍数递增 |
@@ -155,7 +157,8 @@ X-Collector-Key: <collector_key>
 }
 ```
 
-- `source` 只允许 `simulated`（本客户端是模拟源，真实硬件接入待后续实现）。
+- `source` 只允许 `simulated` 或 `real`；本客户端目前仍是模拟源，接真实传感器后才写 `real`。
+- 服务端会逐条核对样本 `metric_type` 与设备绑定是否一致，不一致整条拒绝并给出原因，不会静默改写指标。
 - 时间统一用 **Asia/Shanghai** 本地时间，格式 `yyyy-MM-dd HH:mm:ss`。
   客户端固定使用 UTC+08:00 计算（上海无夏令时），不依赖运行机器的系统时区。
 - 数值精度：温度 / 湿度保留 1 位小数，光照 `lx` 取整数。
@@ -206,7 +209,7 @@ X-Collector-Key: <collector_key>
 
 ## 界面说明
 
-- **① 运行配置**：只读展示配置文件路径、上传地址、设备/大棚、指标、间隔；配置有问题时
+- **① 运行配置**：只读展示配置文件路径、上传地址（含应用上下文）、设备/大棚、指标、采集来源、间隔；配置有问题时
   红色列出全部原因，并禁用上传按钮。
 - **② 采集控制**：开始 / 暂停定时上传、立即上传一次；修改“上传间隔”会立即作用于运行中的定时器。
 - **③ 本批结果**：`accepted / duplicated / rejected`、尝试次数、最近一次错误（红色高亮）。
@@ -228,6 +231,6 @@ X-Collector-Key: <collector_key>
 2. **服务端接口尚未实现**：当前 Java Web 项目的 `/api/environment` 只有 GET `action=ping`
    检查入口，`/api/environment/ingest` 的业务实现待补；本客户端按任务书给出的契约实现，
    联调前请确认服务端字段名与响应结构一致。
-3. **真实硬件未接入**：所有数据由 `SampleGenerator` 模拟，`source` 固定 `simulated`。
+3. **真实硬件未接入**：所有数据由 `SampleGenerator` 模拟，`source` 默认 `simulated`；界面和上传 body 都按配置标注来源，汇报时不得写成实采。
 4. **真实采集凭据未配置**：示例配置只有占位值，`collector_key` 必须替换为服务端下发的凭据。
 5. HTTPS 走 Qt 默认的 TLS 后端，证书/代理环境未专门验证。

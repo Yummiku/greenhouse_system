@@ -315,9 +315,10 @@ QByteArray CollectorClient::buildPayload() const
     QJsonObject root;
     root.insert(QStringLiteral("device_pk"), m_config.devicePk);
     root.insert(QStringLiteral("greenhouse_id"), m_config.greenhouseId);
-    // TODO(真实硬件)：本客户端是模拟源，source 固定为 simulated。
-    // 真正接入传感器后应改为 hardware，并把 samples 换成硬件读数。
-    root.insert(QStringLiteral("source"), QStringLiteral("simulated"));
+    // 来源由配置决定：模拟采集写 simulated，接上真实传感器后把配置改成 real。
+    // 服务端只接受 simulated / real，采集端不能自报 manual（人工来源只能在页面录入）。
+    root.insert(QStringLiteral("source"),
+                m_config.source.isEmpty() ? QStringLiteral("simulated") : m_config.source);
     root.insert(QStringLiteral("samples"), samples);
 
     return QJsonDocument(root).toJson(QJsonDocument::Compact);

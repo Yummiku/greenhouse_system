@@ -28,7 +28,11 @@ struct CollectorConfig {
     qint64 devicePk = 0;
     qint64 greenhouseId = 0;
     QString greenhouseCode;  // 大棚编码，用作 sample_key 前缀
+    // 数据来源：simulated = 模拟采集（默认，本客户端目前仍是模拟源），real = 真实采集。
+    // 原样写进上传 body 的 source；服务端只认 simulated / real，人工来源不能由采集端自报。
+    QString source = QStringLiteral("simulated");
     int uploadIntervalMs = 2000;
+    // 一台已绑定采样设备只对应一个指标：这里必须恰好一个元素（第13周三人约定）。
     QVector<MetricType> metrics;
     RetryPolicy retry;
 
