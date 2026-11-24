@@ -43,6 +43,13 @@ public class LoginFilter implements Filter {
             return;
         }
 
+        // 未登录时也不能放行页面，但采集上传不依赖登录会话：它只用 X-Collector-Key，
+        // 由 EnvironmentIngestServlet 自己校验凭据，因此在这里精确放行这一条路径。
+        if ("/api/environment/ingest".equals(w08Path)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String path = request.getServletPath();
 
         // 登录页面、登录接口和静态资源直接放行
