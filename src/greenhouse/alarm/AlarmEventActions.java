@@ -89,6 +89,7 @@ public final class AlarmEventActions {
                 """,id);
             if(event==null)throw new IllegalArgumentException("报警事件不存在");
             event.put("actions",rows(c,"SELECT id,action,actor_id,actor_name,note,created_at FROM alarm_action WHERE event_id=? ORDER BY id",id));
+            event.put("samples",rows(c,"SELECT id,greenhouse_id,device_pk,metric_type,value,unit,sample_time,source,is_deleted FROM environment_sample WHERE id IN (?,?,?) ORDER BY sample_time,id",event.get("first_sample_id"),event.get("last_sample_id"),event.get("recovery_sample_id")));
             return event;
         }
     }

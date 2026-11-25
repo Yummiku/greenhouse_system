@@ -1,0 +1,2 @@
+const api=require('../../utils/api'),fmt=require('../../utils/format');
+Page({data:{event:null,error:'',busy:false},onLoad(options){this.id=options.id;this.refresh();},async refresh(){if(this.data.busy)return;this.setData({busy:true,error:'',event:null});try{this.setData({event:fmt.event(await api.request('alarm_detail',{id:this.id}))});}catch(e){this.setData({error:e.message});}finally{this.setData({busy:false});wx.stopPullDownRefresh();}},onPullDownRefresh(){return this.refresh();}});

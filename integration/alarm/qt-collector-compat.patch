@@ -1,0 +1,41 @@
+--- a/client/qt-collector/src/CollectorTypes.cpp
++++ b/client/qt-collector/src/CollectorTypes.cpp
+@@ -44,7 +44,7 @@
+ std::optional<MetricType> metricTypeFromName(const QString& name)
+ {
+     for (const MetricInfo& info : kMetricInfos) {
+-        if (name == QString::fromUtf8(info->jsonName)) {
++        if (name == QString::fromUtf8(info.jsonName)) {
+             return info.type;
+         }
+     }
+--- a/client/qt-collector/src/CollectorClient.cpp
++++ b/client/qt-collector/src/CollectorClient.cpp
+@@ -75,6 +75,27 @@
+     const QJsonValue rejectedValue = data.value(QStringLiteral("rejected"));
+     if (rejectedValue.isUndefined() || rejectedValue.isNull()) {
+         // 没有拒收项时，服务端可能省略字段或写 null；两者都按“空数组”处理更稳妥。
++        return true;
++    }
++    // The week13 server keeps rejected as a count, with individual reasons in items.
++    if (rejectedValue.isDouble()) {
++        const int expected = rejectedValue.toInt(-1);
++        if (expected < 0 || rejectedValue.toDouble() != expected) {
++            *kind = ErrorKind::ProtocolError;
++            *message = QStringLiteral("Invalid rejected count");
++            return false;
++        }
++        for (const QJsonValue& value : data.value(QStringLiteral("items")).toArray()) {
++            const auto item = value.toObject();
++            if (item.value(QStringLiteral("ingest_status")).toString() == QStringLiteral("rejected")) {
++                response->rejected.append({item.value(QStringLiteral("sample_key")).toString(), item.value(QStringLiteral("reason")).toString()});
++            }
++        }
++        if (response->rejected.size() != expected) {
++            *kind = ErrorKind::ProtocolError;
++            *message = QStringLiteral("Rejected count and items mismatch");
++            return false;
++        }
+         return true;
+     }
+     if (!rejectedValue.isArray()) {

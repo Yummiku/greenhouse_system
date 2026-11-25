@@ -1,0 +1,11 @@
+--- a/src/user/filter/LoginFilter.java
++++ b/src/user/filter/LoginFilter.java
+@@ -34,7 +34,7 @@
+         String w08Path = request.getRequestURI()
+                 .substring(request.getContextPath().length());
+ 
+-        if ("/api/week08/todo".equals(w08Path)
++        if ("/api/environment/ingest".equals(w08Path) || "/api/week08/todo".equals(w08Path)
+                 || "/api/week08/location".equals(w08Path)
+                 || ("/api/week08/bind".equals(w08Path)
+                 && "ping".equals(request.getParameter("action")))
