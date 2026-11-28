@@ -1,0 +1,164 @@
+{
+  "environment": "本任务独立QA MySQL13366 / Tomcat9999，不是组长正式库",
+  "queried_at": "2026-11-24T21:03:00.596129",
+  "rules": "一设备一棚一指标；内部ID必须按各自环境查询",
+  "greenhouses": [
+    {
+      "area": 480,
+      "length": 24,
+      "created_at": "2026-11-16 14:17:15.0",
+      "remark": "",
+      "manager_name": "系统管理员",
+      "is_deleted": 0,
+      "updated_at": "2026-11-16 14:17:15.0",
+      "manager_id": 1,
+      "name": "二号演示棚",
+      "width": 20,
+      "location": "示范园西区",
+      "id": 2,
+      "greenhouse_code": "GH-DEMO-02",
+      "status": "enabled"
+    },
+    {
+      "area": 600,
+      "length": 30,
+      "created_at": "2026-11-16 14:17:14.0",
+      "remark": "",
+      "manager_name": "系统管理员",
+      "is_deleted": 0,
+      "updated_at": "2026-11-16 14:17:14.0",
+      "manager_id": 1,
+      "name": "一号演示棚",
+      "width": 20,
+      "location": "示范园东区",
+      "id": 1,
+      "greenhouse_code": "GH-DEMO-01",
+      "status": "enabled"
+    }
+  ],
+  "devices": [
+    {
+      "device_name": "二号演示棚模拟air_temperature",
+      "unit": "℃",
+      "device_pk": 1,
+      "greenhouse_name": "二号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-02-air_temperature",
+      "metric_type": "air_temperature",
+      "device_type": "sensor",
+      "greenhouse_id": 2
+    },
+    {
+      "device_name": "一号演示棚模拟air_temperature",
+      "unit": "℃",
+      "device_pk": 2,
+      "greenhouse_name": "一号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-01-air_temperature",
+      "metric_type": "air_temperature",
+      "device_type": "sensor",
+      "greenhouse_id": 1
+    },
+    {
+      "device_name": "二号演示棚模拟air_humidity",
+      "unit": "%",
+      "device_pk": 3,
+      "greenhouse_name": "二号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-02-air_humidity",
+      "metric_type": "air_humidity",
+      "device_type": "sensor",
+      "greenhouse_id": 2
+    },
+    {
+      "device_name": "一号演示棚模拟air_humidity",
+      "unit": "%",
+      "device_pk": 4,
+      "greenhouse_name": "一号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-01-air_humidity",
+      "metric_type": "air_humidity",
+      "device_type": "sensor",
+      "greenhouse_id": 1
+    },
+    {
+      "device_name": "二号演示棚模拟soil_temperature",
+      "unit": "℃",
+      "device_pk": 5,
+      "greenhouse_name": "二号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-02-soil_temperature",
+      "metric_type": "soil_temperature",
+      "device_type": "sensor",
+      "greenhouse_id": 2
+    },
+    {
+      "device_name": "一号演示棚模拟soil_temperature",
+      "unit": "℃",
+      "device_pk": 6,
+      "greenhouse_name": "一号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-01-soil_temperature",
+      "metric_type": "soil_temperature",
+      "device_type": "sensor",
+      "greenhouse_id": 1
+    },
+    {
+      "device_name": "二号演示棚模拟soil_moisture",
+      "unit": "%",
+      "device_pk": 7,
+      "greenhouse_name": "二号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-02-soil_moisture",
+      "metric_type": "soil_moisture",
+      "device_type": "sensor",
+      "greenhouse_id": 2
+    },
+    {
+      "device_name": "一号演示棚模拟soil_moisture",
+      "unit": "%",
+      "device_pk": 8,
+      "greenhouse_name": "一号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-01-soil_moisture",
+      "metric_type": "soil_moisture",
+      "device_type": "sensor",
+      "greenhouse_id": 1
+    },
+    {
+      "device_name": "二号演示棚模拟illuminance",
+      "unit": "lx",
+      "device_pk": 9,
+      "greenhouse_name": "二号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-02-illuminance",
+      "metric_type": "illuminance",
+      "device_type": "sensor",
+      "greenhouse_id": 2
+    },
+    {
+      "device_name": "一号演示棚模拟illuminance",
+      "unit": "lx",
+      "device_pk": 10,
+      "greenhouse_name": "一号演示棚",
+      "control_purpose": null,
+      "device_code": "GH-DEMO-01-illuminance",
+      "metric_type": "illuminance",
+      "device_type": "sensor",
+      "greenhouse_id": 1
+    }
+  ],
+  "source_dictionary": {
+    "air_temperature": "℃",
+    "air_humidity": "%",
+    "soil_temperature": "℃",
+    "soil_moisture": "%",
+    "illuminance": "lx"
+  },
+  "source_values": [
+    "simulated",
+    "real",
+    "manual"
+  ],
+  "joint_acceptance": "Qt→采样→报警尚未在本环境联合验证"
+}

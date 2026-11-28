@@ -61,6 +61,21 @@
         <div class="top-menu">
             <ul class="nav navbar-nav pull-right">
 
+                <li class="dropdown dropdown-extended dropdown-notification" id="gh-message-menu">
+                    <a href="<%= request.getContextPath() %>/maintain/message/message_inbox.jsp"
+                       class="dropdown-toggle" data-toggle="dropdown" data-close-others="true"
+                       id="gh-message-toggle" aria-label="我的消息">
+                        <i class="icon-envelope"></i>
+                        <span class="badge badge-default" id="gh-unread-count" hidden style="display:none"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-default" style="width:320px;max-width:90vw">
+                        <li style="padding:12px 16px"><strong id="gh-unread-summary" role="status">正在加载消息……</strong></li>
+                        <li><ul id="gh-recent-messages" style="list-style:none;padding:0;max-height:300px;overflow:auto"></ul></li>
+                        <li class="divider"></li>
+                        <li><a href="<%= request.getContextPath() %>/maintain/message/message_inbox.jsp">查看全部消息</a></li>
+                    </ul>
+                </li>
+
                 <li class="dropdown dropdown-user">
                     <a href="javascript:;"
                        class="dropdown-toggle"
@@ -69,7 +84,7 @@
 
                         <i class="icon-user"></i>
 
-                        <span class="username">
+                        <span class="username" id="gh-account-name">
                             <%= ghHeaderSafeName %>
                         </span>
 
@@ -83,6 +98,23 @@
                             </a>
                         </li>
 
+                        <li class="divider"></li>
+
+                        <li>
+                            <a href="<%= request.getContextPath() %>/maintain/user/profile.jsp#profile">
+                                <i class="icon-user"></i> 个人资料
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<%= request.getContextPath() %>/maintain/user/profile.jsp#password">
+                                <i class="icon-lock"></i> 修改密码
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<%= request.getContextPath() %>/maintain/message/message_inbox.jsp">
+                                <i class="icon-envelope"></i> 我的消息
+                            </a>
+                        </li>
                         <li class="divider"></li>
 
                         <li>

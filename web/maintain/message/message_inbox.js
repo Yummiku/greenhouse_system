@@ -504,5 +504,8 @@
         });
     }
 
-    loadAll();
+    loadAll().then(function () {
+        var id = new URLSearchParams(window.location.search).get("id");
+        if (id && /^[1-9]\d*$/.test(id)) openDetail(id);
+    });
 })();

@@ -38,3 +38,4 @@
 </script>
 
 <script src="<%= request.getContextPath() %>/assets/app/js/app-api.js"></script>
+<script src="<%= request.getContextPath() %>/home/frame/account-menu.js"></script>

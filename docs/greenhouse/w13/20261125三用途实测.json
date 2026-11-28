@@ -1,0 +1,26 @@
+{
+  "environment": "独立QA接口；非实体控制执行",
+  "records": [
+    {
+      "purpose": "ventilation",
+      "device_code": "QA-RECTIFY-1795591893-ventilation",
+      "greenhouse_id": 7,
+      "passed": true,
+      "current_and_history": true
+    },
+    {
+      "purpose": "cooling",
+      "device_code": "QA-RECTIFY-1795591893-cooling",
+      "greenhouse_id": 7,
+      "passed": true,
+      "current_and_history": true
+    },
+    {
+      "purpose": "irrigation",
+      "device_code": "QA-RECTIFY-1795591893-irrigation",
+      "greenhouse_id": 7,
+      "passed": true,
+      "current_and_history": true
+    }
+  ]
+}

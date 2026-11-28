@@ -1,0 +1,77 @@
+{
+  "environment": "最终部署QA环境；控制用途增补验证",
+  "tests": [
+    {
+      "time": "2026-11-24T21:03:49.628695+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "控制用途必填",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：请选择通风、降温或灌溉用途"
+    },
+    {
+      "time": "2026-11-24T21:03:49.688763+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "非法控制用途拒绝",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：请选择通风、降温或灌溉用途"
+    },
+    {
+      "time": "2026-11-24T21:03:49.755669+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "合法通风用途绑定",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "绑定成功"
+    },
+    {
+      "time": "2026-11-24T21:03:49.811578+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "控制用途可读取",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-24T21:03:49.884481+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "控制解绑",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "已解除绑定，原归属已保存到历史记录"
+    },
+    {
+      "time": "2026-11-24T21:03:49.940536+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "控制用途历史快照",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-24T21:03:49.991012+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "客户端不能指定收获时间",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：开始与收获时间由服务器动作确定，不接受客户端指定"
+    },
+    {
+      "time": "2026-11-24T21:03:50.095027+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "已收获批次可查询",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    }
+  ]
+}

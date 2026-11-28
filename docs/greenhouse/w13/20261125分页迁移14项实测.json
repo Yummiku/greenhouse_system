@@ -1,0 +1,89 @@
+{
+  "time": "2026-11-25T15:29:52.627625",
+  "records": [
+    {
+      "name": "旧devices调用保持数组兼容",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "设备后台分页每页10",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "全条件绑定数不随页长改变10",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "设备后台分页每页20",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "全条件绑定数不随页长改变20",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "设备后台分页每页50",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "全条件绑定数不随页长改变50",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "第二页与第一页无重复",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "空结果总数与绑定数均为0",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "拒绝非法页长",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "SQL18测试副本在独立test库连续执行两次",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "SQL19测试副本在独立test库连续执行两次",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "SQL18新字段确实位于test库",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    },
+    {
+      "name": "SQL19仅建立共享数据视图",
+      "passed": true,
+      "environment": "13366/9999独立QA库与Tomcat",
+      "role": "QA admin"
+    }
+  ]
+}

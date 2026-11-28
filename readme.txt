@@ -281,3 +281,36 @@ CSV和报表接口按权限及条件分批取数；打印覆盖跨页记录，�
 发件箱打印截图显示12条，收件箱跨页打印按用户反馈通过；演示消息24/25关联实际接收人id5，重复执行未增加记录，
 缺失账号测试副本不插入消息；三角色菜单及跳转由用户确认正常。完整消息模块及地图等其他功能不据此自动认定通过。
 原有地图待修复说明仍然有效，本次不包含地图修复。
+
+十七、右上角账户菜单与个人中心（2026-11-26）
+
+右上角姓名下拉菜单新增个人资料、修改密码、我的消息；系统首页和退出登录保留。
+个人中心页面为 /maintain/user/profile.jsp，#profile定位资料，#password定位改密。
+三类角色均可查看本人安全资料、修改本人显示名称；不能指定其他账号或修改账号、角色、状态。
+个人资料保存采用CSRF与version校验。改密必须校验原密码，至少8字符且UTF-8不超过72字节；
+成功后提升auth_version并注销当前会话，其他PC会话在下一次受保护请求失效。密码和哈希不返回前端。
+新接口 /api/account 使用AccountServlet的@WebServlet注册，不需要再在web.xml重复映射。
+复用09号升级已有字段，不增加表；此前已执行09、51、52的环境无需为本次更新运行新SQL。
+
+右上角信封显示本人真实未读数量，可展开最近5条消息及查看全部消息；点击消息可打开收件箱详情。
+每60秒、返回页面、展开菜单以及消息维护成功时刷新。数据加载失败显示不可用，不伪装成零未读。
+右上角消息与侧边消息中心使用相同数据；侧边业务菜单、管理员用户管理入口保留。
+
+部署文件（均相对项目根目录）：
+src/greenhouse/identity/AccountDao.java
+src/greenhouse/identity/AccountServlet.java
+web/home/frame/frame_header.jsp
+web/home/frame/frame_javascript.jsp
+web/home/frame/account-menu.js
+web/assets/app/js/app-api.js
+web/maintain/user/profile.jsp
+web/maintain/user/profile.css
+web/maintain/user/profile.js
+web/maintain/message/message_inbox.js
+停止Tomcat后合并上述10个文件到目标项目，保留本机私有配置，重新构建并部署，重新登录并Ctrl+F5刷新。
+本次未修改数据库或提交到GitHub。同步主机其他未提交功能时，仍按相应模块自己的SQL和文件清单部署。
+
+验证：45个当前应用Java源文件编译通过；AccountModuleCheck的72项H2/模拟HTTP断言及原UserModuleCheck的58项检查通过；
+菜单、消息徽标、资料表单和请求事件23项模拟DOM/API检查通过。未连接真实MySQL，未完成虚拟机Tomcat浏览器验收。
+建议在验收副本用测试账号验证：三角色入口、本人资料保存、旧密码错误/新密码不一致、改密后重新登录、
+篡改id/role_id/status和缺少令牌被拒绝、未读消息变动、点击最近消息详情，以及原用户管理与大棚菜单。

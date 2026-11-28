@@ -1,0 +1,53 @@
+{
+  "environment": "隔离QA库合成凭据；直接模拟失效字段，不是微信换码或完整账号维护流程验收",
+  "records": [
+    {
+      "scenario": "停用",
+      "old_http": 401,
+      "same_second_http": 401,
+      "new_after_one_second_http": 200,
+      "checks_passed": true,
+      "limitation": "普通资料修改也失效；同秒新凭据被拒。尚待公共身份负责人决定版本机制。"
+    },
+    {
+      "scenario": "停用后恢复",
+      "old_http": 401,
+      "same_second_http": 401,
+      "new_after_one_second_http": 200,
+      "checks_passed": true,
+      "limitation": "普通资料修改也失效；同秒新凭据被拒。尚待公共身份负责人决定版本机制。"
+    },
+    {
+      "scenario": "角色变化",
+      "old_http": 401,
+      "same_second_http": 401,
+      "new_after_one_second_http": 200,
+      "checks_passed": true,
+      "limitation": "普通资料修改也失效；同秒新凭据被拒。尚待公共身份负责人决定版本机制。"
+    },
+    {
+      "scenario": "密码重置失效字段",
+      "old_http": 401,
+      "same_second_http": 401,
+      "new_after_one_second_http": 200,
+      "checks_passed": true,
+      "limitation": "普通资料修改也失效；同秒新凭据被拒。尚待公共身份负责人决定版本机制。"
+    },
+    {
+      "scenario": "普通资料修改",
+      "old_http": 401,
+      "same_second_http": 401,
+      "new_after_one_second_http": 200,
+      "checks_passed": true,
+      "limitation": "普通资料修改也失效；同秒新凭据被拒。尚待公共身份负责人决定版本机制。"
+    },
+    {
+      "scenario": "同秒重新登录",
+      "old_http": 401,
+      "same_second_http": 401,
+      "new_after_one_second_http": 200,
+      "checks_passed": true,
+      "limitation": "普通资料修改也失效；同秒新凭据被拒。尚待公共身份负责人决定版本机制。"
+    }
+  ]
+}

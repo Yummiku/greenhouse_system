@@ -1,0 +1,311 @@
+{
+  "environment": "独立QA MySQL13366/Tomcat9999；移动凭据为合成测试，非微信实登",
+  "tests": [
+    {
+      "time": "2026-11-25T15:25:28.180093+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "新增QA棚，后台拒信客户端面积",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "保存成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.208527+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "新增QA棚，后台拒信客户端面积",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "保存成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.288204+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "面积按长宽500核算",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.322248+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "新增sensor",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "设备档案已新增，请选择大棚进行绑定"
+    },
+    {
+      "time": "2026-11-25T15:25:28.350329+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "新增control",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "设备档案已新增，请选择大棚进行绑定"
+    },
+    {
+      "time": "2026-11-25T15:25:28.406572+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "重复设备编号拒绝",
+      "expected_http": 409,
+      "actual_http": 409,
+      "passed": true,
+      "result": "编号重复或关联冲突，请检查设备或批次编号"
+    },
+    {
+      "time": "2026-11-25T15:25:28.452973+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "控制设备不能绑定采样温度",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：设备类型与指标不匹配：sensor仅传感器指标，control仅控制用途"
+    },
+    {
+      "time": "2026-11-25T15:25:28.482641+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "双请求绑定仅一个成功",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "[200, 409]"
+    },
+    {
+      "time": "2026-11-25T15:25:28.534500+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "解绑",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "已解除绑定，原归属已保存到历史记录"
+    },
+    {
+      "time": "2026-11-25T15:25:28.551959+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "历史含起止与快照",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.575662+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "重绑",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "绑定成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.594983+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "历史仍为原归属",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.618633+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "停用棚",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "保存成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.633853+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "停用棚不能新绑",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：请选择通风、降温或灌溉用途"
+    },
+    {
+      "time": "2026-11-25T15:25:28.655665+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "重新启用QA棚",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "保存成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.682721+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "品种可空及3650天边界",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "种植批次已保存"
+    },
+    {
+      "time": "2026-11-25T15:25:28.697802+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "周期3651拒绝",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：生长周期应为1—3650天"
+    },
+    {
+      "time": "2026-11-25T15:25:28.731637+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "计划不能直接收获",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "参数错误：计划必须先开始再收获"
+    },
+    {
+      "time": "2026-11-25T15:25:28.756351+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "开始种植",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "种植批次已保存"
+    },
+    {
+      "time": "2026-11-25T15:25:28.784269+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "开始时间由服务端保存",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.808760+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "驾驶舱当前存量及生长批次",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.832762+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "驾驶舱倒置日期",
+      "expected_http": 400,
+      "actual_http": 400,
+      "passed": true,
+      "result": "筛选参数无效"
+    },
+    {
+      "time": "2026-11-25T15:25:28.854948+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "收获",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "种植批次已保存"
+    },
+    {
+      "time": "2026-11-25T15:25:28.870210+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "收获时间不早于开始",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:28.885259+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "收获后不计生长比例",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:30.485346+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "移动入口无token401",
+      "expected_http": 401,
+      "actual_http": 401,
+      "passed": true,
+      "result": "请重新登录小程序"
+    },
+    {
+      "time": "2026-11-25T15:25:30.504184+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "移动凭据列表",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:30.519042+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "移动详情含所属设备",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:30.532091+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "移动禁止冒充他人",
+      "expected_http": 403,
+      "actual_http": 403,
+      "passed": true,
+      "result": "不得指定其他身份"
+    },
+    {
+      "time": "2026-11-25T15:25:30.536356+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "移动禁止POST",
+      "expected_http": 403,
+      "actual_http": 403,
+      "passed": true,
+      "result": "小程序大棚入口只读"
+    },
+    {
+      "time": "2026-11-25T15:25:31.144124+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "角色变动旧移动凭据失效",
+      "expected_http": 401,
+      "actual_http": 401,
+      "passed": true,
+      "result": "账号状态或权限已变化，请重新登录"
+    },
+    {
+      "time": "2026-11-25T15:25:31.728546+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "停用账号移动凭据拒绝",
+      "expected_http": 401,
+      "actual_http": 401,
+      "passed": true,
+      "result": "账号状态或权限已变化，请重新登录"
+    },
+    {
+      "time": "2026-11-25T15:25:31.979882+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "普通用户驾驶舱可读",
+      "expected_http": 200,
+      "actual_http": 200,
+      "passed": true,
+      "result": "成功"
+    },
+    {
+      "time": "2026-11-25T15:25:31.994260+08:00",
+      "role": "QA admin/worker/mobile",
+      "step": "普通用户设备维护拒绝",
+      "expected_http": 403,
+      "actual_http": 403,
+      "passed": true,
+      "result": "无维护权限"
+    }
+  ]
+}

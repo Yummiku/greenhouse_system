@@ -1,0 +1,5 @@
+#account-center{max-width:960px}#account-center .portlet{padding:24px;scroll-margin-top:75px}
+#account-center dl{display:grid;grid-template-columns:110px 1fr;gap:8px 16px;margin-bottom:24px}
+#account-center dd{overflow-wrap:anywhere}#account-center form{max-width:480px}
+#account-center label{display:block;margin:16px 0 6px}#account-center button{margin-top:16px}
+#account-center #account-status{padding:12px 0}#account-center .account-error{color:#a12622}

@@ -1,0 +1,40 @@
+{
+  "environment": "独立QA真实HTTP；不代表实体打印验收",
+  "checks": [
+    {
+      "check": "最终JSP编译响应 index.jsp",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "check": "最终JSP编译响应 devices.jsp",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "check": "最终JSP编译响应 batches.jsp",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "check": "最终JSP编译响应 dashboard.jsp",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "check": "最终JSP编译响应 map.jsp",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "check": "保留CSV响应及UTF8 BOM api/greenhouses?action=export",
+      "passed": true,
+      "http": 200
+    },
+    {
+      "check": "保留CSV响应及UTF8 BOM api/greenhouse-resources?action=batch_export",
+      "passed": true,
+      "http": 200
+    }
+  ]
+}

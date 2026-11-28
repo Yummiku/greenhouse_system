@@ -34,7 +34,8 @@ public class LoginFilter implements Filter {
         String w08Path = request.getRequestURI()
                 .substring(request.getContextPath().length());
 
-        if ("/api/week08/todo".equals(w08Path)
+        if ("/api/mini/greenhouses".equals(w08Path) // 此精确路由由MiniGreenhouseServlet独立校验微信凭据
+                || "/api/week08/todo".equals(w08Path)
                 || "/api/week08/location".equals(w08Path)
                 || ("/api/week08/bind".equals(w08Path)
                 && "ping".equals(request.getParameter("action")))

@@ -7,6 +7,46 @@ jQuery(function ($) {
 
     var context = menu.attr("data-context");
 
+    // 使用模板已有的 Font Awesome 4.3；按页面匹配，不依赖各数据库的菜单编号。
+    var iconsByPath = {
+        "/maintain/todo/todo_crud.jsp": "fa-tasks",
+        "/maintain/todo/todo_dashboard.jsp": "fa-bar-chart",
+        "/maintain/environment/environment.jsp": "fa-tachometer",
+        "/maintain/greenhouse/index.jsp": "fa-home",
+        "/maintain/greenhouse/map.jsp": "fa-map-marker",
+        "/maintain/greenhouse/devices.jsp": "fa-cogs",
+        "/maintain/greenhouse/batches.jsp": "fa-pagelines",
+        "/maintain/greenhouse/dashboard.jsp": "fa-bar-chart",
+        "/maintain/threshold/threshold.jsp": "fa-sliders",
+        "/maintain/user/index.jsp": "fa-user",
+        "/maintain/message/message_inbox.jsp": "fa-inbox",
+        "/maintain/message/message_compose.jsp": "fa-paper-plane",
+        "/maintain/permission/index.jsp": "fa-key",
+        "/maintain/permission/review.jsp": "fa-shield",
+        "/maintain/permission/dashboard.jsp": "fa-tachometer"
+    };
+    var iconsByName = {
+        "工作管理": "fa-briefcase",
+        "农业管理": "fa-leaf",
+        "大棚档案": "fa-home",
+        "账号信息": "fa-users",
+        "消息中心": "fa-envelope",
+        "档案列表": "fa-home",
+        "种植批次管理": "fa-pagelines",
+        "设备归属管理": "fa-cogs",
+        "大棚位置地图": "fa-map-marker",
+        "阈值规则": "fa-sliders"
+    };
+
+    function menuIcon(record) {
+        var path = String(record.item_url || "").split(/[?#]/)[0];
+        var name = String(record.item_name || "").trim();
+        var icon = Object.prototype.hasOwnProperty.call(iconsByPath, path)
+            ? iconsByPath[path]
+            : (Object.prototype.hasOwnProperty.call(iconsByName, name) ? iconsByName[name] : "fa-list-ul");
+        return "fa fa-fw " + icon;
+    }
+
     getMenuRecord();
 
     function getMenuRecord() {
@@ -52,7 +92,7 @@ jQuery(function ($) {
             var validPath = path.indexOf("/maintain/") === 0;
             var item = $("<li>");
             var link = $("<a>").attr("href", validPath ? context + path : "javascript:;");
-            link.append($("<i>").addClass("icon-list"), $("<span>").addClass("title").text(record.item_name));
+            link.append($("<i>").addClass(menuIcon(record)).attr("aria-hidden", "true"), $("<span>").addClass("title").text(record.item_name));
             var subMenu = $("<ul>").addClass("sub-menu").css("display", "block");
             list.filter(function (child) { return String(child.parent_id) === id; }).forEach(function (child) {
                 var node = build(child, ancestors.concat(id));

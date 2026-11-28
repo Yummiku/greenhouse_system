@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-25T07:37:53.573Z",
+  "records": [
+    {
+      "name": "取消解绑不发POST且只提示已取消",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "解绑写入失败不报成功且恢复动作",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "历史读取失败只报失败不打开弹窗",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "控制用途当前与历史均中文",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "设备保存成功刷新失败明确已保存",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "设备保存失败保留弹窗和输入并恢复按钮",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "设备连续保存只提交一次",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "设备刷新不读取未应用输入",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "设备后台分页参数及全条件统计",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "批次保存成功刷新失败明确已保存",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "批次保存失败保留弹窗及按钮",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序空响应可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序非JSON响应可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序缺少约定字段可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序业务内容错误可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序401失效可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序403拒绝可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序超时可结束请求",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    },
+    {
+      "name": "小程序正常空列表独立于错误",
+      "passed": true,
+      "environment": "Node + jsdom / mock wx，非真机"
+    }
+  ]
+}

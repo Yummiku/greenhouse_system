@@ -1,0 +1,21 @@
+diff --git a/src/user/filter/LoginFilter.java b/src/user/filter/LoginFilter.java
+index 8692095..b34db08 100644
+--- a/src/user/filter/LoginFilter.java
++++ b/src/user/filter/LoginFilter.java
+@@ -34,7 +34,8 @@ public class LoginFilter implements Filter {
+         String w08Path = request.getRequestURI()
+                 .substring(request.getContextPath().length());
+ 
+-        if ("/api/week08/todo".equals(w08Path)
++        if ("/api/mini/greenhouses".equals(w08Path) // 此精确路由由MiniGreenhouseServlet独立校验微信凭据
++                || "/api/week08/todo".equals(w08Path)
+                 || "/api/week08/location".equals(w08Path)
+                 || ("/api/week08/bind".equals(w08Path)
+                 && "ping".equals(request.getParameter("action")))
+@@ -110,4 +111,4 @@ public class LoginFilter implements Filter {
+                         + "/home/main/login.jsp"
+         );
+     }
+-}
+\ No newline at end of file
++}

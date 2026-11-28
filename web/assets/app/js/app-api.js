@@ -76,6 +76,9 @@
                         ? result.result_msg : "接口请求失败";
                 throw apiError(message, response.status, result.result_code);
             }
+            if (method === "POST" && path === "/api/messages") {
+                global.document.dispatchEvent(new global.Event("gh:messages-changed"));
+            }
             return result;
         } catch (error) {
             if (error.name === "AbortError") {

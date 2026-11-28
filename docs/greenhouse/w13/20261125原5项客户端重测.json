@@ -1,0 +1,25 @@
+{
+  "environment": "Node vm + mock wx；非微信模拟器或真机",
+  "checks": [
+    {
+      "test": "第一页列表",
+      "passed": true
+    },
+    {
+      "test": "分页不重复旧页",
+      "passed": true
+    },
+    {
+      "test": "新筛选清空旧列表且从第一页请求",
+      "passed": true
+    },
+    {
+      "test": "加载中禁止重叠分页",
+      "passed": true
+    },
+    {
+      "test": "401清除旧账号列表",
+      "passed": true
+    }
+  ]
+}

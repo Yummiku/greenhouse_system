@@ -103,3 +103,25 @@ Java 编译、Tomcat 启动和业务验收需在各成员的开发环境执行�
 本次只同步主题和加载配置，不包含验收副本中的环境采样、阈值业务代码，也没有调整模块统计与表单的位置。
 部署时同步主题 CSS 和两份 JSP，更新资源或重启 Tomcat 后按 Ctrl+F5 刷新，无需运行 SQL。
 浏览器检查使用现有 JSP 页面结构和实际样式文件；实际 Tomcat 登录、权限及数据库业务仍按各环境运行验收。
+
+## 第13周：权限申请、审批与个人驾驶舱（待虚拟机验收）
+
+本轮初版位于 `feature/w13-permission-requests`。沿用已有用户、登录过滤器、CSRF令牌和绿色主题，未修改数据库私有配置、公共菜单脚本或 `web.xml`。
+
+在已完成09号用户升级的目标库中，依次执行 `sql/61_permission_requests.sql`、`sql/62_permission_request_menu.sql`。两份脚本均不写 `USE`，执行前在Navicat选中实际目标库并核对 `SELECT DATABASE()`；验收库应为 `greenhouse_system_test`。61增量建立申请表，62自动分配空闲菜单编号。已有账号和业务表不清空，不需要重跑01或09。两份脚本可以重复执行，执行时不要与其他菜单迁移并发。
+
+复制新文件：`src/greenhouse/identity/PermissionRequestDao.java`、`PermissionRequestServlet.java`，以及整个 `web/maintain/permission/` 小目录。Servlet通过 `@WebServlet` 注册，不要再往 `web.xml` 重复添加。停止Tomcat、重新构建并部署war exploded，再启动并按Ctrl+F5刷新。
+
+页面地址（前面加本环境的项目访问前缀）：
+
+- `/maintain/permission/index.jsp`：我的权限申请，三类角色可查看本人历史，仅启用的普通用户可新增。
+- `/maintain/permission/review.jsp`：系统管理员审批，默认待审批，可按条件查询全部历史。
+- `/maintain/permission/dashboard.jsp`：个人驾驶舱；系统管理员看全局账号、申请统计，其他角色只看本人资料和申请统计。
+
+流程：普通用户只能申请普通管理员，申请理由1–500字符，同时最多一条待审批申请；待审批可确认撤回，不能编辑正文或删除历史。系统管理员批准或驳回，驳回意见必填。批准时重新核对申请人启用状态及普通用户角色，并在同一事务中更新角色、申请、版本和认证版本；申请人的旧会话在下次受保护请求失效，重新登录后获得新角色。已处理申请只读，重复处理返回409。停用、删除或角色已变化的申请人不能批准，但可驳回。前台不要求输入内部编号或版本。
+
+接口统一为 `/api/permission-requests`：GET `context/list/detail/report/export/dashboard`；POST `create/approve/reject/withdraw`，写操作须带 `csrf_token`。`scope=mine`仅本人，`scope=review`仅系统管理员。列表参数为 `keyword/status/start/end/dir/page/size`；日期按申请日期首尾包含，size为10/20/50；待审批优先，再按申请时间和编号稳定排序。详情、批准、驳回、撤回使用接口返回的 `id/version`，由页面传递。批准意见可空，驳回意见不可空；两者最长500字符。
+
+统计、列表、导出和打印沿用已经点击查询的条件；详情及新建使用Bootstrap弹窗，撤回和审批有二次确认；失败弹窗并保留输入，提交时防重复点击。CSV处理公式注入，页面用textContent展示用户文本。驾驶舱为当前状态快照，活跃用户指标明确“未接入”，待肖的日志接口交付后联调，不以账号总数替代。
+
+本机检查：JDK17全源码编译，原用户模块58项隔离检查通过，新权限模块隔离检查通过；新JSP经Tomcat10.1 Jasper编译零错误，JS通过Node语法检查。测试使用H2并适配DDL方言，未连接用户MySQL；MySQL8生成列/唯一约束、菜单迁移、真实Tomcat会话和浏览器操作须在验收库复测。测试源码位于 `tests/PermissionRequestCheck.java`，复用 `tests/UserModuleCheck.java` 的隔离HTTP和数据库辅助方法，不读取本机凭据。通过虚拟机复测前不将此初版标为验收完成。
